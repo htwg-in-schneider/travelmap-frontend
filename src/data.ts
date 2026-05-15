@@ -1,4 +1,4 @@
-export const userName = 'Max'
+export const userName = 'Philipp'
 
 export interface Trip {
   id: number

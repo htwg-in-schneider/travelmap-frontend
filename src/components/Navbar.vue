@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UserIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
+import { UserCircleIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
 import logo from '../../assets/travelmap-logo.svg'
 </script>
 
@@ -12,8 +12,8 @@ import logo from '../../assets/travelmap-logo.svg'
       <span class="text-xl text-gray-900">Travelmap</span>
     </div>
     <div class="flex items-center gap-4">
-      <MagnifyingGlassIcon class="h-8 w-8 text-gray-600" />
-      <UserIcon class="h-8 w-8 text-gray-600" />
+      <MagnifyingGlassIcon class="h-7 w-7 text-gray-800" />
+      <UserCircleIcon class="h-8 w-8 text-gray-800" />
     </div>
   </nav>
 </template>

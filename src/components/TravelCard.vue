@@ -2,21 +2,30 @@
 import placeholder from '../../assets/placeholder.png'
 
 defineProps<{
-  title: string
+  location: string
+  date: string
   text: string
+  flag: string
 }>()
 </script>
 
 <template>
   <div
-    class="rounded-xl border-2 border-zinc-300 bg-white p-4 shadow-sm duration-300 hover:border-blue-600"
+    class="relative flex h-full flex-col rounded-3xl border-2 border-zinc-300 bg-white p-4 duration-300 hover:border-blue-600"
   >
-    <h2 class="mb-2 text-xl font-bold text-gray-800">{{ title }}</h2>
+    <div class="mb-2 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">{{ flag }}</span>
+        <h2 class="text-xl text-gray-800">{{ location }}</h2>
+      </div>
+      <span class="text-sm text-gray-500">{{ date }}</span>
+    </div>
+
     <p class="mb-4 text-sm text-gray-600">{{ text }}</p>
-    <div class="flex gap-2 overflow-x-auto">
-      <img :src="placeholder" alt="placeholder" class="w-20 rounded-lg object-cover" />
-      <img :src="placeholder" alt="placeholder" class="w-20 rounded-lg object-cover" />
-      <img :src="placeholder" alt="placeholder" class="w-20 rounded-lg object-cover" />
+    <div class="mt-auto flex gap-2 overflow-x-auto">
+      <img :src="placeholder" alt="placeholder" class="w-18 rounded-lg object-cover" />
+      <img :src="placeholder" alt="placeholder" class="w-18 rounded-lg object-cover" />
+      <img :src="placeholder" alt="placeholder" class="w-18 rounded-lg object-cover" />
     </div>
   </div>
 </template>

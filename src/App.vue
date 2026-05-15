@@ -17,12 +17,19 @@ import { userName, trips } from './data'
 
       <Map class="my-6 h-128 w-full rounded-lg" />
       <div class="mb-6 flex gap-3">
-        <Button variant="primary"><PlusIcon class="h-5 w-5" /> Add</Button>
-        <Button variant="secondary"><FunnelIcon class="h-5 w-5" /> Filter</Button>
+        <Button variant="primary"><PlusIcon class="h-5 w-5" /></Button>
+        <Button variant="secondary"><FunnelIcon class="h-8 w-5" /></Button>
       </div>
       <div class="flex flex-1 flex-col justify-center pb-6">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <TravelCard v-for="trip in trips" :key="trip.id" :title="trip.title" :text="trip.text" />
+          <TravelCard
+            v-for="trip in trips"
+            :key="trip.id"
+            :location="trip.location"
+            :date="trip.date"
+            :text="trip.text"
+            :flag="trip.flag"
+          />
         </div>
       </div>
 

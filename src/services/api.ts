@@ -4,14 +4,17 @@ export interface CreateTripPayload {
   location: string
   date: string
   text: string
-  flag: string
+  countryCode: string | null
+  latitude: number | null
+  longitude: number | null
 }
 
 const BASE_URL = 'http://localhost:8081/api/trip'
 
-export async function fetchTrips(params?: { name?: string }): Promise<Trip[]> {
+export async function fetchTrips(params?: { location?: string; text?: string }): Promise<Trip[]> {
   const url = new URL(BASE_URL)
-  if (params?.name) url.searchParams.set('name', params.name)
+  if (params?.location) url.searchParams.set('location', params.location)
+  if (params?.text) url.searchParams.set('text', params.text)
   const response = await fetch(url.toString())
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`)

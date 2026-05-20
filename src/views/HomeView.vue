@@ -20,7 +20,7 @@ const showFilter = ref(false)
 
 onMounted(async () => loadTrips())
 
-async function loadTrips(params?: { name?: string }) {
+async function loadTrips(params?: { location?: string }) {
   loading.value = true
   error.value = ''
   try {
@@ -34,7 +34,7 @@ async function loadTrips(params?: { name?: string }) {
 }
 
 function onSearch(params: { name: string }) {
-  loadTrips({ name: params.name || undefined })
+  loadTrips({ location: params.name || undefined })
 }
 
 function toggleFilter() {
@@ -52,7 +52,7 @@ function toggleFilter() {
 
       <h2 class="mt-8 mb-6 text-2xl text-gray-900">Willkommen zurück, {{ userName }}! 🌍</h2>
 
-      <Map class="my-6 h-128 w-full rounded-lg" />
+      <Map :trips="trips" class="my-6 h-128 w-full rounded-lg" />
       <div class="mb-3 flex gap-3">
         <Button variant="primary" @click="router.push({ name: 'create-trip-step1' })"><PlusIcon class="h-5 w-5" /></Button>
         <Button variant="secondary" @click="toggleFilter"><FunnelIcon class="h-8 w-5" /></Button>
@@ -71,7 +71,6 @@ function toggleFilter() {
             :location="trip.location"
             :date="trip.date"
             :text="trip.text"
-            :flag="trip.flag"
           />
         </div>
       </div>

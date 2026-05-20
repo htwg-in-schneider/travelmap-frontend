@@ -28,9 +28,22 @@ export const useMapStore = defineStore('map', () => {
   const center = ref<[number, number]>(stored?.center ?? [-71.06776, 42.35816])
   const zoom = ref(stored?.zoom ?? 1)
 
+  const pendingCenter = ref<[number, number] | null>(null)
+  const pendingZoom = ref<number | null>(null)
+
   function saveMapState(newCenter: [number, number], newZoom: number) {
     center.value = newCenter
     zoom.value = newZoom
+  }
+
+  function setPendingFlyTo(newCenter: [number, number], newZoom: number) {
+    pendingCenter.value = newCenter
+    pendingZoom.value = newZoom
+  }
+
+  function clearPendingFlyTo() {
+    pendingCenter.value = null
+    pendingZoom.value = null
   }
 
   watch(
@@ -42,5 +55,5 @@ export const useMapStore = defineStore('map', () => {
     { deep: true }
   )
 
-  return { center, zoom, saveMapState }
+  return { center, zoom, saveMapState, pendingCenter, pendingZoom, setPendingFlyTo, clearPendingFlyTo }
 })

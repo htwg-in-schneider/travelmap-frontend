@@ -6,15 +6,15 @@ export const useCreateTripStore = defineStore('createTrip', () => {
   const text = ref('')
   const lat = ref<number | null>(null)
   const lng = ref<number | null>(null)
-  const flag = ref('')
+  const countryCode = ref('')
 
   function reset() {
     title.value = ''
     text.value = ''
     lat.value = null
     lng.value = null
-    flag.value = ''
+    countryCode.value = ''
   }
 
-  return { title, text, lat, lng, flag, reset }
+  return { title, text, lat, lng, countryCode, reset }
 })

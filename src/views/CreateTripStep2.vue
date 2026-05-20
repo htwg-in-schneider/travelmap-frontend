@@ -5,10 +5,12 @@ import { ArrowLeftIcon } from '@heroicons/vue/24/solid'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { useCreateTripStore } from '@/stores/createTrip'
+import { useMapStore } from '@/stores/map'
 import { createTrip } from '@/services/api'
 
 const router = useRouter()
 const store = useCreateTripStore()
+const mapStore = useMapStore()
 
 const mapContainer = ref<HTMLDivElement | null>(null)
 const map = ref<mapboxgl.Map | null>(null)
@@ -17,13 +19,9 @@ const locationName = ref(store.title)
 const saving = ref(false)
 const error = ref('')
 
-const canSave = computed(() => store.lat !== null && store.lng !== null && locationName.value.trim().length > 0)
-
-function countryCodeToFlag(code: string): string {
-  return code
-    .toUpperCase()
-    .replace(/./g, (c) => String.fromCodePoint(c.charCodeAt(0) + 127397))
-}
+const canSave = computed(
+  () => store.lat !== null && store.lng !== null && locationName.value.trim().length > 0,
+)
 
 async function reverseGeocode(lng: number, lat: number) {
   const token = import.meta.env.VITE_MAPBOX_KEY
@@ -41,11 +39,11 @@ async function reverseGeocode(lng: number, lat: number) {
     }
 
     const countryContext = feature.context?.find((c: { id: string }) => c.id.startsWith('country'))
-    const countryCode: string | undefined =
+    const code: string | undefined =
       countryContext?.short_code ?? feature.properties?.short_code
 
-    if (countryCode) {
-      store.flag = countryCodeToFlag(countryCode.slice(-2))
+    if (code) {
+      store.countryCode = code.slice(-2).toLowerCase()
     }
   } catch {
     // Geocoding nicht kritisch — Nutzer kann manuell eingeben
@@ -60,9 +58,7 @@ function handleMapClick(e: mapboxgl.MapMouseEvent) {
   if (marker.value) {
     marker.value.setLngLat([lng, lat])
   } else {
-    marker.value = new mapboxgl.Marker({ color: '#2563eb' })
-      .setLngLat([lng, lat])
-      .addTo(map.value!)
+    marker.value = new mapboxgl.Marker({ color: '#2563eb' }).setLngLat([lng, lat]).addTo(map.value as any)
   }
 
   reverseGeocode(lng, lat)
@@ -104,8 +100,13 @@ async function submit() {
       location: locationName.value.trim(),
       date: new Date().toISOString().slice(0, 10),
       text: store.text,
-      flag: store.flag || '🌍',
+      countryCode: store.countryCode || null,
+      latitude: store.lat,
+      longitude: store.lng,
     })
+    if (store.lng !== null && store.lat !== null) {
+      mapStore.setPendingFlyTo([store.lng, store.lat], 6)
+    }
     store.reset()
     router.push({ name: 'home' })
   } catch {
@@ -131,20 +132,8 @@ async function submit() {
     <div ref="mapContainer" class="w-full flex-1" style="min-height: 55vh" />
 
     <div class="mx-auto w-full max-w-lg px-6 pt-5 pb-8">
-      <p class="mb-2 text-sm text-gray-500">
-        Tippe auf die Karte, um einen Standort zu markieren.
-      </p>
+      <p class="mb-2 text-sm text-gray-500">Tippe auf die Karte, um einen Standort zu markieren.</p>
 
-      <div class="flex flex-col gap-1.5">
-        <label class="text-sm font-medium text-gray-700" for="location">Ort</label>
-        <input
-          id="location"
-          v-model="locationName"
-          type="text"
-          placeholder="Ortsname"
-          class="rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition-colors placeholder:text-gray-400 focus:border-blue-600"
-        />
-      </div>
 
       <div v-if="error" class="mt-3 text-sm text-red-500">{{ error }}</div>
 

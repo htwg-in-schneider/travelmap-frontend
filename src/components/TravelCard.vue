@@ -11,7 +11,6 @@ defineProps<{
   location: string
   date: string
   text: string
-  flag: string
 }>()
 </script>
 
@@ -20,13 +19,7 @@ defineProps<{
     :to="{ name: 'trip-detail', params: { id } }"
     class="relative flex h-full flex-col rounded-3xl border-2 border-zinc-300 bg-white p-4 duration-300 hover:border-blue-600"
   >
-    <div class="mb-2 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <span class="text-2xl">{{ flag }}</span>
-        <h2 class="text-xl text-gray-800">{{ location }}</h2>
-      </div>
-      <span class="text-sm text-gray-500">{{ date }}</span>
-    </div>
+    <h2 class="mb-2 text-xl text-gray-800">{{ location }}</h2>
 
     <p class="mb-4 text-sm text-gray-600">{{ text }}</p>
     <div class="mt-auto flex items-center gap-2 overflow-x-auto">
@@ -46,19 +39,22 @@ defineProps<{
       </div>
     </div>
 
-    <div class="mt-5 flex items-center gap-5 text-gray-400">
-      <button class="flex items-center gap-1.5 transition-colors hover:text-red-500">
-        <HeartIcon class="h-5 w-5" />
-        <span class="text-xs font-medium">0</span>
-      </button>
-      <button class="flex items-center gap-1.5 transition-colors hover:text-blue-500">
-        <ChatBubbleOvalLeftIcon class="h-5 w-5" />
-        <span class="text-xs font-medium">0</span>
-      </button>
-      <button class="flex items-center gap-1.5 transition-colors hover:text-green-500">
-        <ArrowPathRoundedSquareIcon class="h-5 w-5" />
-        <span class="text-xs font-medium">0</span>
-      </button>
+    <div class="mt-5 flex items-center justify-between text-gray-400">
+      <div class="flex items-center gap-5">
+        <button class="flex items-center gap-1.5 transition-colors hover:text-red-500">
+          <HeartIcon class="h-5 w-5" />
+          <span class="text-xs font-medium">0</span>
+        </button>
+        <button class="flex items-center gap-1.5 transition-colors hover:text-blue-500">
+          <ChatBubbleOvalLeftIcon class="h-5 w-5" />
+          <span class="text-xs font-medium">0</span>
+        </button>
+        <button class="flex items-center gap-1.5 transition-colors hover:text-green-500">
+          <ArrowPathRoundedSquareIcon class="h-5 w-5" />
+          <span class="text-xs font-medium">0</span>
+        </button>
+      </div>
+      <span class="text-xs text-gray-500">{{ date }}</span>
     </div>
   </router-link>
 </template>

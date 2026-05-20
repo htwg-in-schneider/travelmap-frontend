@@ -5,5 +5,7 @@ export interface Trip {
   location: string
   date: string
   text: string
-  flag: string
+  countryCode: string | null
+  latitude: number | null
+  longitude: number | null
 }

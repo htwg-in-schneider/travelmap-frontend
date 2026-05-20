@@ -40,9 +40,17 @@ async function loadTrip() {
       <div v-if="loading" class="mt-8 text-gray-500">Laden...</div>
       <div v-else-if="error" class="mt-8 text-red-500">{{ error }}</div>
       <div v-else-if="trip" class="mt-8">
-        <div class="flex items-center gap-3">
-          <span class="text-4xl">{{ trip.flag }}</span>
+        <div class="flex items-start justify-between">
           <h1 class="text-3xl text-gray-900">{{ trip.location }}</h1>
+          <div
+            v-if="trip.countryCode"
+            class="h-10 w-10 shrink-0 overflow-hidden rounded-lg shadow-sm"
+          >
+            <span
+              :class="'fi-' + trip.countryCode"
+              style="display: block; width: 100%; height: 100%; background-size: cover; background-position: center; background-repeat: no-repeat;"
+            />
+          </div>
         </div>
         <p class="mt-2 text-gray-500">{{ trip.date }}</p>
         <p class="mt-6 text-gray-700">{{ trip.text }}</p>

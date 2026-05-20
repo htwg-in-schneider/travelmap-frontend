@@ -8,6 +8,9 @@ import Map from '@/components/Map.vue'
 import { userName, type Trip } from '@/data'
 import { ref, onMounted } from 'vue'
 import { fetchTrips as apiFetchTrips } from '@/services/api'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const trips = ref<Trip[]>([])
 const loading = ref(true)
@@ -37,7 +40,7 @@ async function loadTrips() {
 
       <Map class="my-6 h-128 w-full rounded-lg" />
       <div class="mb-6 flex gap-3">
-        <Button variant="primary"><PlusIcon class="h-5 w-5" /></Button>
+        <Button variant="primary" @click="router.push({ name: 'create-trip-step1' })"><PlusIcon class="h-5 w-5" /></Button>
         <Button variant="secondary"><FunnelIcon class="h-8 w-5" /></Button>
       </div>
       <div v-if="loading" class="mt-8 text-gray-500">Laden...</div>

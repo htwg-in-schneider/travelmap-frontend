@@ -1,5 +1,12 @@
 import { type Trip } from '@/data'
 
+export interface CreateTripPayload {
+  location: string
+  date: string
+  text: string
+  flag: string
+}
+
 const BASE_URL = 'http://localhost:8081/api/trip'
 
 export async function fetchTrips(): Promise<Trip[]> {
@@ -16,6 +23,18 @@ export async function fetchTripById(id: string | string[]): Promise<Trip | null>
     if (response.status === 404) {
       return null
     }
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+  return response.json()
+}
+
+export async function createTrip(payload: CreateTripPayload): Promise<Trip> {
+  const response = await fetch(BASE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`)
   }
   return response.json()

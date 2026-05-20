@@ -1,7 +1,7 @@
 import { type Trip } from '@/data'
 
 export interface CreateTripPayload {
-  location: string
+  title: string
   date: string
   text: string
   countryCode: string | null
@@ -11,9 +11,9 @@ export interface CreateTripPayload {
 
 const BASE_URL = 'http://localhost:8081/api/trip'
 
-export async function fetchTrips(params?: { location?: string; text?: string }): Promise<Trip[]> {
+export async function fetchTrips(params?: { title?: string; text?: string }): Promise<Trip[]> {
   const url = new URL(BASE_URL)
-  if (params?.location) url.searchParams.set('location', params.location)
+  if (params?.title) url.searchParams.set('title', params.title)
   if (params?.text) url.searchParams.set('text', params.text)
   const response = await fetch(url.toString())
   if (!response.ok) {

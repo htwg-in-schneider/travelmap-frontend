@@ -97,7 +97,7 @@ async function submit() {
   error.value = ''
   try {
     await createTrip({
-      location: locationName.value.trim(),
+      title: locationName.value.trim(),
       date: new Date().toISOString().slice(0, 10),
       text: store.text,
       countryCode: store.countryCode || null,

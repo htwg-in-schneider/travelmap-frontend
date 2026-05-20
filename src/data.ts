@@ -2,7 +2,7 @@ export const userName = 'Philipp'
 
 export interface Trip {
   id: number
-  location: string
+  title: string
   date: string
   text: string
   countryCode: string | null

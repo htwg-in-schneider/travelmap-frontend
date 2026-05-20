@@ -20,7 +20,7 @@ const showFilter = ref(false)
 
 onMounted(async () => loadTrips())
 
-async function loadTrips(params?: { location?: string }) {
+async function loadTrips(params?: { title?: string }) {
   loading.value = true
   error.value = ''
   try {
@@ -34,7 +34,7 @@ async function loadTrips(params?: { location?: string }) {
 }
 
 function onSearch(params: { name: string }) {
-  loadTrips({ location: params.name || undefined })
+  loadTrips({ title: params.name || undefined })
 }
 
 function toggleFilter() {
@@ -47,33 +47,35 @@ function toggleFilter() {
 
 <template>
   <div class="flex min-h-screen flex-col bg-gray-50">
-    <div class="mx-auto w-full max-w-4xl px-6 pt-20">
+    <div class="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 pt-20">
       <Navbar />
 
-      <h2 class="mt-8 mb-6 text-2xl text-gray-900">Willkommen zurück, {{ userName }}! 🌍</h2>
+      <main class="flex-1">
+        <h2 class="mt-8 mb-6 text-2xl text-gray-900">Willkommen zurück, {{ userName }}! 🌍</h2>
 
-      <Map :trips="trips" class="my-6 h-128 w-full rounded-lg" />
-      <div class="mb-3 flex gap-3">
-        <Button variant="primary" @click="router.push({ name: 'create-trip-step1' })"><PlusIcon class="h-5 w-5" /></Button>
-        <Button variant="secondary" @click="toggleFilter"><FunnelIcon class="h-8 w-5" /></Button>
-      </div>
-      <div v-if="showFilter" class="mb-6">
-        <TripFilter @search="onSearch" />
-      </div>
-      <div v-if="loading" class="mt-8 text-gray-500">Laden...</div>
-      <div v-else-if="error" class="mt-8 text-red-500">{{ error }}</div>
-      <div v-else class="flex flex-1 flex-col justify-center pb-6">
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <TravelCard
-            v-for="trip in trips"
-            :key="trip.id"
-            :id="trip.id"
-            :location="trip.location"
-            :date="trip.date"
-            :text="trip.text"
-          />
+        <Map :trips="trips" class="my-6 h-128 w-full rounded-lg" />
+        <div class="mb-3 flex gap-3">
+          <Button variant="primary" @click="router.push({ name: 'create-trip-step1' })"><PlusIcon class="h-5 w-5" /></Button>
+          <Button variant="secondary" @click="toggleFilter"><FunnelIcon class="h-8 w-5" /></Button>
         </div>
-      </div>
+        <div v-if="showFilter" class="mb-6">
+          <TripFilter @search="onSearch" />
+        </div>
+        <div v-if="loading" class="mt-8 text-gray-500">Laden...</div>
+        <div v-else-if="error" class="mt-8 text-red-500">{{ error }}</div>
+        <div v-else class="flex flex-1 flex-col justify-center pb-6">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <TravelCard
+              v-for="trip in trips"
+              :key="trip.id"
+              :id="trip.id"
+              :title="trip.title"
+              :date="trip.date"
+              :text="trip.text"
+            />
+          </div>
+        </div>
+      </main>
 
       <Footer />
     </div>

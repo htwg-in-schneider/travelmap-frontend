@@ -64,7 +64,7 @@ function addTripMarkers() {
       .addTo(map.value as any)
 
     const popup = new mapboxgl.Popup({ offset: 24, closeButton: false }).setHTML(
-      `<div class="px-2 py-1 text-sm font-medium text-gray-900">${trip.location}</div>`,
+      `<div class="px-2 py-1 text-sm font-medium text-gray-900">${trip.title}</div>`,
     )
 
     el.addEventListener('click', () => {

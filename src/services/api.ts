@@ -9,8 +9,10 @@ export interface CreateTripPayload {
 
 const BASE_URL = 'http://localhost:8081/api/trip'
 
-export async function fetchTrips(): Promise<Trip[]> {
-  const response = await fetch(BASE_URL)
+export async function fetchTrips(params?: { name?: string }): Promise<Trip[]> {
+  const url = new URL(BASE_URL)
+  if (params?.name) url.searchParams.set('name', params.name)
+  const response = await fetch(url.toString())
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`)
   }

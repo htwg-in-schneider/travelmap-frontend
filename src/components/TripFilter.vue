@@ -1,43 +1,81 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
+import { FunnelIcon } from '@heroicons/vue/24/solid'
+import { CONTINENTS, type Continent } from '@/utils/continents'
 
-const emit = defineEmits<{
-  search: [params: { name: string }]
+type OrderBy = 'newest' | 'oldest' | 'most-commented' | ''
+
+const props = defineProps<{
+  continent: Continent | ''
+  orderBy: OrderBy
 }>()
 
-const name = ref('')
+const emit = defineEmits<{
+  filter: [params: { continent: Continent | ''; orderBy: OrderBy }]
+}>()
 
-function onSearch() {
-  emit('search', { name: name.value.trim() })
+function emitFilter(next: Partial<{ continent: Continent | ''; orderBy: OrderBy }>) {
+  emit('filter', {
+    continent: next.continent ?? props.continent,
+    orderBy: next.orderBy ?? props.orderBy,
+  })
 }
 
 function onClear() {
-  name.value = ''
-  emit('search', { name: '' })
+  emit('filter', { continent: '', orderBy: '' })
 }
 </script>
 
 <template>
-  <div class="flex gap-2">
-    <div class="relative flex-1">
-      <MagnifyingGlassIcon
-        class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
-      />
-      <input
-        v-model="name"
-        type="text"
-        placeholder="Reise suchen…"
-        class="w-full rounded-xl border-2 border-gray-300 bg-white py-2.5 pr-4 pl-9 text-sm text-gray-900 outline-none transition-colors placeholder:text-gray-400 focus:border-blue-600"
-        @input="onSearch"
-      />
+  <div class="rounded-2xl border-2 border-gray-200 bg-white p-4">
+    <div class="mb-4 flex items-center gap-2 text-sm font-medium text-gray-700">
+      <FunnelIcon class="h-4 w-4 text-gray-400" />
+      <span>Filter trips</span>
     </div>
-    <button
-      v-if="name"
-      @click="onClear"
-      class="rounded-xl border-2 border-gray-300 bg-white px-3 text-sm text-gray-500 transition-colors hover:border-blue-600 hover:text-blue-600"
-    >
-      Löschen
-    </button>
+
+    <div class="grid gap-3 md:grid-cols-3">
+      <label class="flex flex-col gap-1.5 text-sm text-gray-700">
+        <span class="font-medium">Continent</span>
+        <select
+          :value="continent"
+          class="rounded-xl border-2 border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-blue-600"
+          @change="
+            emitFilter({
+              continent: ($event.target as HTMLSelectElement).value as Continent | '',
+            })
+          "
+        >
+          <option value="">All continents</option>
+          <option v-for="item in CONTINENTS" :key="item" :value="item">{{ item }}</option>
+        </select>
+      </label>
+
+      <label class="flex flex-col gap-1.5 text-sm text-gray-700">
+        <span class="font-medium">Order By</span>
+        <select
+          :value="orderBy"
+          class="rounded-xl border-2 border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-blue-600"
+          @change="
+            emitFilter({
+              orderBy: ($event.target as HTMLSelectElement).value as OrderBy,
+            })
+          "
+        >
+          <option value="">Default order</option>
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="most-commented">Most commented</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="mt-4 flex justify-end">
+      <button
+        v-if="continent || orderBy"
+        @click="onClear"
+        class="rounded-xl border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-500 transition-colors hover:border-blue-600 hover:text-blue-600"
+      >
+        Reset filters
+      </button>
+    </div>
   </div>
 </template>

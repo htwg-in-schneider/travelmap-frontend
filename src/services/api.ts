@@ -58,10 +58,9 @@ async function normalizeTrip(trip: TripApiResponse): Promise<Trip> {
   }
 }
 
-export async function fetchTrips(params?: { title?: string; text?: string }): Promise<Trip[]> {
+export async function fetchTrips(params?: { q?: string }): Promise<Trip[]> {
   const url = new URL(BASE_URL)
-  if (params?.title) url.searchParams.set('title', params.title)
-  if (params?.text) url.searchParams.set('text', params.text)
+  if (params?.q) url.searchParams.set('q', params.q)
   const response = await fetch(url.toString())
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`)

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { FunnelIcon } from '@heroicons/vue/24/solid'
 import { CONTINENTS, type Continent } from '@/utils/continents'
+import { computed } from 'vue'
 
-type OrderBy = 'newest' | 'oldest' | 'most-commented' | ''
+type OrderBy = 'newest' | 'oldest' | 'most-commented'
 
 const props = defineProps<{
   continent: Continent | ''
@@ -13,6 +14,8 @@ const emit = defineEmits<{
   filter: [params: { continent: Continent | ''; orderBy: OrderBy }]
 }>()
 
+const hasActiveFilters = computed(() => props.continent || props.orderBy !== 'newest')
+
 function emitFilter(next: Partial<{ continent: Continent | ''; orderBy: OrderBy }>) {
   emit('filter', {
     continent: next.continent ?? props.continent,
@@ -21,7 +24,7 @@ function emitFilter(next: Partial<{ continent: Continent | ''; orderBy: OrderBy 
 }
 
 function onClear() {
-  emit('filter', { continent: '', orderBy: '' })
+  emit('filter', { continent: '', orderBy: 'newest' })
 }
 </script>
 
@@ -53,6 +56,7 @@ function onClear() {
         <span class="font-medium">Order By</span>
         <select
           :value="orderBy"
+          required
           class="rounded-xl border-2 border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-blue-600"
           @change="
             emitFilter({
@@ -60,7 +64,6 @@ function onClear() {
             })
           "
         >
-          <option value="">Default order</option>
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>
           <option value="most-commented">Most commented</option>
@@ -70,7 +73,7 @@ function onClear() {
 
     <div class="mt-4 flex justify-end">
       <button
-        v-if="continent || orderBy"
+        v-if="hasActiveFilters"
         @click="onClear"
         class="rounded-xl border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-500 transition-colors hover:border-blue-600 hover:text-blue-600"
       >

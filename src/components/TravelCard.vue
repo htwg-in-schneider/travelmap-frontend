@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   HeartIcon,
@@ -6,6 +7,7 @@ import {
   ArrowPathRoundedSquareIcon,
 } from '@heroicons/vue/24/outline'
 import placeholder from '../../assets/placeholder.png'
+import { formatDateOnly } from '@/utils/date'
 
 const props = defineProps<{
   id: number
@@ -16,6 +18,7 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const displayDate = computed(() => formatDateOnly(props.date))
 
 function goToComments(event: MouseEvent) {
   event.stopPropagation()
@@ -68,7 +71,7 @@ function goToComments(event: MouseEvent) {
           <span class="text-xs font-medium">0</span>
         </button>
       </div>
-      <span class="text-xs text-gray-500">{{ date }}</span>
+      <span class="text-xs text-gray-500">{{ displayDate }}</span>
     </div>
   </div>
 </template>

@@ -8,12 +8,13 @@ import TripFilter from '@/components/TripFilter.vue'
 import TripSearch from '@/components/TripSearch.vue'
 import Map from '@/components/Map.vue'
 import { userName, type Trip } from '@/data'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { fetchTrips as apiFetchTrips } from '@/services/api'
 import { useRouter } from 'vue-router'
 import { getContinentByCountryCode, type Continent } from '@/utils/continents'
+import { parseDateTime } from '@/utils/date'
 
-type OrderBy = 'newest' | 'oldest' | 'most-commented' | ''
+type OrderBy = 'newest' | 'oldest' | 'most-commented'
 
 const router = useRouter()
 
@@ -24,7 +25,11 @@ const showFilter = ref(false)
 const showSearch = ref(false)
 const searchTerm = ref('')
 const selectedContinent = ref<Continent | ''>('')
-const orderBy = ref<OrderBy>('')
+const orderBy = ref<OrderBy>('newest')
+const searchDebounceMs = 250
+
+let searchTimeout: ReturnType<typeof setTimeout> | null = null
+let latestRequestId = 0
 
 const visibleTrips = computed(() => {
   let nextTrips = [...trips.value]
@@ -42,8 +47,8 @@ const visibleTrips = computed(() => {
 
   if (orderBy.value === 'newest' || orderBy.value === 'oldest') {
     nextTrips.sort((left, right) => {
-      const leftTime = Number.isNaN(Date.parse(left.date)) ? 0 : Date.parse(left.date)
-      const rightTime = Number.isNaN(Date.parse(right.date)) ? 0 : Date.parse(right.date)
+      const leftTime = parseDateTime(left.date)
+      const rightTime = parseDateTime(right.date)
 
       return orderBy.value === 'oldest' ? leftTime - rightTime : rightTime - leftTime
     })
@@ -52,24 +57,50 @@ const visibleTrips = computed(() => {
   return nextTrips
 })
 
-onMounted(async () => loadTrips())
+onMounted(async () => {
+  await loadTrips()
+})
+
+onUnmounted(() => {
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+    searchTimeout = null
+  }
+})
 
 async function loadTrips() {
+  const requestId = ++latestRequestId
   loading.value = true
   error.value = ''
   try {
-    trips.value = await apiFetchTrips({ q: searchTerm.value.trim() || undefined })
+    const nextTrips = await apiFetchTrips({ q: searchTerm.value.trim() || undefined })
+
+    if (requestId !== latestRequestId) return
+
+    trips.value = nextTrips
   } catch (err) {
+    if (requestId !== latestRequestId) return
+
     console.error('Error fetching trips:', err)
     error.value = 'Fehler beim Laden der Reisen.'
   } finally {
-    loading.value = false
+    if (requestId === latestRequestId) {
+      loading.value = false
+    }
   }
 }
 
 function onSearch(params: { query: string }) {
   searchTerm.value = params.query
-  loadTrips()
+
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+  }
+
+  searchTimeout = setTimeout(() => {
+    searchTimeout = null
+    loadTrips()
+  }, searchDebounceMs)
 }
 
 function onFilter(params: {

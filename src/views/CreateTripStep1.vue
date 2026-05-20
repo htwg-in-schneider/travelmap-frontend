@@ -24,7 +24,7 @@ function next() {
 <template>
   <div class="flex min-h-screen flex-col bg-gray-50">
     <div class="mx-auto flex w-full max-w-lg flex-1 flex-col px-6 pt-6">
-      <div class="mb-8 flex items-center gap-4">
+      <div class="relative z-10 mb-8 flex items-center gap-4">
         <button
           @click="goBack"
           class="rounded-xl p-2 text-gray-600 transition-colors hover:bg-gray-200"

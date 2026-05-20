@@ -1,17 +1,24 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { type Trip } from '@/data'
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/solid'
 import { fetchTripById } from '@/services/api'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
 import TripComments from '@/components/TripComments.vue'
 import placeholder from '../../assets/placeholder.png'
+import { formatDateOnly } from '@/utils/date'
 
 const route = useRoute()
 const trip = ref<Trip | null>(null)
 const loading = ref(true)
 const error = ref('')
+const currentImageIndex = ref(0)
+
+const images = Array.from({ length: 6 }, () => placeholder)
+
+const currentImage = computed(() => images[currentImageIndex.value] ?? placeholder)
 
 onMounted(async () => loadTrip())
 
@@ -31,6 +38,20 @@ async function loadTrip() {
   } finally {
     loading.value = false
   }
+}
+
+function showPreviousImage() {
+  currentImageIndex.value =
+    currentImageIndex.value === 0 ? images.length - 1 : currentImageIndex.value - 1
+}
+
+function showNextImage() {
+  currentImageIndex.value =
+    currentImageIndex.value === images.length - 1 ? 0 : currentImageIndex.value + 1
+}
+
+function selectImage(index: number) {
+  currentImageIndex.value = index
 }
 </script>
 
@@ -58,14 +79,48 @@ async function loadTrip() {
           <p class="mt-6 text-gray-700">{{ trip.text }}</p>
 
           <div class="mt-8">
-            <p class="mb-4 text-right text-sm text-gray-500">{{ trip.date }}</p>
-            <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              <img :src="placeholder" alt="placeholder" class="aspect-square w-full rounded-lg object-cover" />
-              <img :src="placeholder" alt="placeholder" class="aspect-square w-full rounded-lg object-cover" />
-              <img :src="placeholder" alt="placeholder" class="aspect-square w-full rounded-lg object-cover" />
-              <img :src="placeholder" alt="placeholder" class="aspect-square w-full rounded-lg object-cover" />
-              <img :src="placeholder" alt="placeholder" class="aspect-square w-full rounded-lg object-cover" />
-              <img :src="placeholder" alt="placeholder" class="aspect-square w-full rounded-lg object-cover" />
+            <p class="mb-4 text-right text-sm text-gray-500">{{ formatDateOnly(trip.date) }}</p>
+            <div class="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-gray-200 bg-white">
+              <div class="bg-gray-100 p-4 sm:p-5">
+                <img
+                  :src="currentImage"
+                  :alt="`${trip.title} image ${currentImageIndex + 1}`"
+                  class="mx-auto aspect-[4/3] w-full max-w-xl rounded-xl object-cover"
+                />
+              </div>
+
+              <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
+                <div class="text-sm text-gray-500">
+                  {{ currentImageIndex + 1 }} / {{ images.length }}
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <button
+                    @click="showPreviousImage"
+                    class="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-700 transition hover:border-blue-600 hover:text-blue-600"
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeftIcon class="h-4 w-4" />
+                  </button>
+
+                  <button
+                    v-for="(image, index) in images"
+                    :key="`${image}-${index}`"
+                    @click="selectImage(index)"
+                    class="h-2.5 w-2.5 rounded-full transition"
+                    :class="index === currentImageIndex ? 'bg-blue-600' : 'bg-gray-300 hover:bg-gray-400'"
+                    :aria-label="`Go to image ${index + 1}`"
+                  />
+
+                  <button
+                    @click="showNextImage"
+                    class="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-700 transition hover:border-blue-600 hover:text-blue-600"
+                    aria-label="Next image"
+                  >
+                    <ChevronRightIcon class="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

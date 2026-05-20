@@ -98,7 +98,7 @@ async function submit() {
   try {
     await createTrip({
       title: locationName.value.trim(),
-      date: new Date().toISOString().slice(0, 10),
+      date: new Date().toISOString(),
       text: store.text,
       countryCode: store.countryCode || null,
       latitude: store.lat,

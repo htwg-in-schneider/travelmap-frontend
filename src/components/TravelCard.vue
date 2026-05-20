@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import {
   HeartIcon,
   ChatBubbleOvalLeftIcon,
@@ -6,12 +7,21 @@ import {
 } from '@heroicons/vue/24/outline'
 import placeholder from '../../assets/placeholder.png'
 
-defineProps<{
+const props = defineProps<{
   id: number
   title: string
   date: string
   text: string
+  commentCount: number
 }>()
+
+const router = useRouter()
+
+function goToComments(event: MouseEvent) {
+  event.stopPropagation()
+  event.preventDefault()
+  router.push({ name: 'trip-detail', params: { id: props.id }, hash: '#comments' })
+}
 </script>
 
 <template>
@@ -46,9 +56,12 @@ defineProps<{
           <HeartIcon class="h-5 w-5" />
           <span class="text-xs font-medium">0</span>
         </button>
-        <button class="flex items-center gap-1.5 transition-colors hover:text-blue-500">
+        <button
+          class="flex items-center gap-1.5 transition-colors hover:text-blue-500"
+          @click="goToComments"
+        >
           <ChatBubbleOvalLeftIcon class="h-5 w-5" />
-          <span class="text-xs font-medium">0</span>
+          <span class="text-xs font-medium">{{ commentCount ?? 0 }}</span>
         </button>
         <button class="flex items-center gap-1.5 transition-colors hover:text-green-500">
           <ArrowPathRoundedSquareIcon class="h-5 w-5" />

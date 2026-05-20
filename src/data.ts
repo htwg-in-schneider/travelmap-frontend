@@ -8,4 +8,11 @@ export interface Trip {
   countryCode: string | null
   latitude: number | null
   longitude: number | null
+  commentCount: number
+}
+
+export interface Comment {
+  id: number
+  text: string
+  userName: string
 }

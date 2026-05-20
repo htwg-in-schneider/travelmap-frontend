@@ -72,6 +72,7 @@ function toggleFilter() {
               :title="trip.title"
               :date="trip.date"
               :text="trip.text"
+              :comment-count="trip.commentCount"
             />
           </div>
         </div>

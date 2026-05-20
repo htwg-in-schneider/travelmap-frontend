@@ -5,6 +5,7 @@ import { type Trip } from '@/data'
 import { fetchTripById } from '@/services/api'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
+import TripComments from '@/components/TripComments.vue'
 import placeholder from '../../assets/placeholder.png'
 
 const route = useRoute()
@@ -72,6 +73,8 @@ async function loadTrip() {
         <div v-else class="mt-8">
           <h1 class="text-2xl text-gray-900">Reise nicht gefunden</h1>
         </div>
+
+        <TripComments v-if="trip" :tripId="(route.params.id as string | string[])" />
       </main>
 
       <Footer />

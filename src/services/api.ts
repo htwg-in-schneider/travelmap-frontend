@@ -94,6 +94,28 @@ export async function createTrip(payload: CreateTripPayload): Promise<Trip> {
   return normalizeTrip(trip)
 }
 
+export async function updateTrip(id: number, payload: CreateTripPayload): Promise<Trip> {
+  const response = await fetch(`${BASE_URL}/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+  const trip: TripApiResponse = await response.json()
+  return normalizeTrip(trip)
+}
+
+export async function deleteTrip(id: number): Promise<void> {
+  const response = await fetch(`${BASE_URL}/${id}`, {
+    method: 'DELETE',
+  })
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+}
+
 export async function fetchCommentsByTrip(id: string | string[]): Promise<Comment[]> {
   const response = await fetch(`${COMMENT_URL}/trip/${id}`)
   if (!response.ok) {

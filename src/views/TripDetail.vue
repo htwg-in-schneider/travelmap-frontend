@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { type Trip } from '@/data'
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/solid'
-import { fetchTripById } from '@/services/api'
+import { ChevronLeftIcon, ChevronRightIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/solid'
+import { fetchTripById, deleteTrip } from '@/services/api'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
 import TripComments from '@/components/TripComments.vue'
@@ -11,10 +11,13 @@ import placeholder from '../../assets/placeholder.png'
 import { formatDateOnly } from '@/utils/date'
 
 const route = useRoute()
+const router = useRouter()
 const trip = ref<Trip | null>(null)
 const loading = ref(true)
 const error = ref('')
 const currentImageIndex = ref(0)
+const showDeleteDialog = ref(false)
+const deleting = ref(false)
 
 const images = Array.from({ length: 6 }, () => placeholder)
 
@@ -53,6 +56,31 @@ function showNextImage() {
 function selectImage(index: number) {
   currentImageIndex.value = index
 }
+
+function goToEdit() {
+  if (!trip.value) return
+  router.push({ name: 'edit-trip', params: { id: trip.value.id.toString() } })
+}
+
+function openDeleteDialog() {
+  showDeleteDialog.value = true
+}
+
+function closeDeleteDialog() {
+  showDeleteDialog.value = false
+}
+
+async function confirmDelete() {
+  if (!trip.value) return
+  deleting.value = true
+  try {
+    await deleteTrip(trip.value.id)
+    router.push({ name: 'home' })
+  } catch (err) {
+    console.error('Error deleting trip:', err)
+    deleting.value = false
+  }
+}
 </script>
 
 <template>
@@ -76,10 +104,10 @@ function selectImage(index: number) {
               />
             </div>
           </div>
+
           <p class="mt-6 text-gray-700">{{ trip.text }}</p>
 
           <div class="mt-8">
-            <p class="mb-4 text-right text-sm text-gray-500">{{ formatDateOnly(trip.date) }}</p>
             <div class="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-gray-200 bg-white">
               <div class="bg-gray-100 p-4 sm:p-5">
                 <img
@@ -123,6 +151,26 @@ function selectImage(index: number) {
               </div>
             </div>
           </div>
+
+          <div class="mt-4 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <button
+                @click="goToEdit"
+                class="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 transition hover:border-blue-600 hover:text-blue-600"
+                aria-label="Bearbeiten"
+              >
+                <PencilIcon class="h-4 w-4" />
+              </button>
+              <button
+                @click="openDeleteDialog"
+                class="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white text-red-600 transition hover:border-red-600 hover:bg-red-50"
+                aria-label="Löschen"
+              >
+                <TrashIcon class="h-4 w-4" />
+              </button>
+            </div>
+            <p class="text-right text-sm text-gray-500">{{ formatDateOnly(trip.date) }}</p>
+          </div>
         </div>
 
         <div v-else class="mt-8">
@@ -130,6 +178,36 @@ function selectImage(index: number) {
         </div>
 
         <TripComments v-if="trip" :tripId="(route.params.id as string | string[])" />
+
+        <!-- Delete Confirmation Dialog -->
+        <div
+          v-if="showDeleteDialog"
+          class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          @click.self="closeDeleteDialog"
+        >
+          <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <h2 class="text-lg font-semibold text-gray-900">Reise löschen?</h2>
+            <p class="mt-2 text-sm text-gray-600">
+              Bist du sicher, dass du diese Reise löschen möchtest? Alle zugehörigen Kommentare werden ebenfalls gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
+            </p>
+            <div class="mt-6 flex justify-end gap-3">
+              <button
+                @click="closeDeleteDialog"
+                class="rounded-xl px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
+              >
+                Abbrechen
+              </button>
+              <button
+                @click="confirmDelete"
+                :disabled="deleting"
+                class="rounded-xl px-4 py-2 text-sm font-medium text-white transition disabled:cursor-not-allowed"
+                :class="deleting ? 'bg-red-400' : 'bg-red-600 hover:bg-red-700'"
+              >
+                {{ deleting ? 'Wird gelöscht…' : 'Löschen' }}
+              </button>
+            </div>
+          </div>
+        </div>
       </main>
 
       <Footer />

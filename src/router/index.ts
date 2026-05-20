@@ -3,6 +3,7 @@ import HomeView from '@/views/HomeView.vue'
 import TripDetail from '@/views/TripDetail.vue'
 import CreateTripStep1 from '@/views/CreateTripStep1.vue'
 import CreateTripStep2 from '@/views/CreateTripStep2.vue'
+import EditTripView from '@/views/EditTripView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -38,6 +39,11 @@ const router = createRouter({
       path: '/trip/create/2',
       name: 'create-trip-step2',
       component: CreateTripStep2,
+    },
+    {
+      path: '/trip/:id/edit',
+      name: 'edit-trip',
+      component: EditTripView,
     },
   ],
 })

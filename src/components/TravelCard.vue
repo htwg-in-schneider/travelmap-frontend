@@ -20,6 +20,12 @@ const props = defineProps<{
 const router = useRouter()
 const displayDate = computed(() => formatDateOnly(props.date))
 
+const MAX_TEXT_LENGTH = 95
+const truncatedText = computed(() => {
+  if (props.text.length <= MAX_TEXT_LENGTH) return props.text
+  return props.text.slice(0, MAX_TEXT_LENGTH).trimEnd() + '…'
+})
+
 function goToComments(event: MouseEvent) {
   event.stopPropagation()
   event.preventDefault()
@@ -34,7 +40,7 @@ function goToComments(event: MouseEvent) {
     <router-link :to="{ name: 'trip-detail', params: { id } }" class="flex flex-1 flex-col">
       <h2 class="mb-2 text-xl text-gray-800">{{ title }}</h2>
 
-      <p class="mb-4 text-sm text-gray-600">{{ text }}</p>
+      <p class="mb-4 text-sm text-gray-500">{{ truncatedText }}</p>
       <div class="mt-auto flex items-center gap-2 overflow-x-auto">
         <img :src="placeholder" alt="placeholder" class="h-12 w-12 rounded-lg object-cover" />
         <img :src="placeholder" alt="placeholder" class="h-12 w-12 rounded-lg object-cover" />

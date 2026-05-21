@@ -32,12 +32,12 @@ function onClear() {
   <div class="rounded-2xl border-2 border-gray-200 bg-white p-4">
     <div class="mb-4 flex items-center gap-2 text-sm font-medium text-gray-700">
       <FunnelIcon class="h-4 w-4 text-gray-400" />
-      <span>Filter trips</span>
+      <span>Reisen filtern</span>
     </div>
 
     <div class="grid gap-3 md:grid-cols-3">
       <label class="flex flex-col gap-1.5 text-sm text-gray-700">
-        <span class="font-medium">Continent</span>
+        <span class="font-medium">Kontinent</span>
         <select
           :value="continent"
           class="rounded-xl border-2 border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-blue-600"
@@ -47,13 +47,13 @@ function onClear() {
             })
           "
         >
-          <option value="">All continents</option>
+          <option value="">Alle Kontinente</option>
           <option v-for="item in CONTINENTS" :key="item" :value="item">{{ item }}</option>
         </select>
       </label>
 
       <label class="flex flex-col gap-1.5 text-sm text-gray-700">
-        <span class="font-medium">Order By</span>
+        <span class="font-medium">Sortieren nach</span>
         <select
           :value="orderBy"
           required
@@ -64,9 +64,9 @@ function onClear() {
             })
           "
         >
-          <option value="newest">Newest first</option>
-          <option value="oldest">Oldest first</option>
-          <option value="most-commented">Most commented</option>
+          <option value="newest">Neueste zuerst</option>
+          <option value="oldest">Älteste zuerst</option>
+          <option value="most-commented">Meist kommentiert</option>
         </select>
       </label>
     </div>
@@ -77,7 +77,7 @@ function onClear() {
         @click="onClear"
         class="rounded-xl border-2 border-gray-300 bg-white px-3 py-2 text-sm text-gray-500 transition-colors hover:border-blue-600 hover:text-blue-600"
       >
-        Reset filters
+        Filter zurücksetzen
       </button>
     </div>
   </div>

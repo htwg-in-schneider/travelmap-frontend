@@ -112,7 +112,7 @@ async function confirmDelete() {
               <div class="bg-gray-100 p-4 sm:p-5">
                 <img
                   :src="currentImage"
-                  :alt="`${trip.title} image ${currentImageIndex + 1}`"
+                  :alt="`${trip.title} Bild ${currentImageIndex + 1}`"
                   class="mx-auto aspect-[4/3] w-full max-w-xl rounded-xl object-cover"
                 />
               </div>
@@ -126,7 +126,7 @@ async function confirmDelete() {
                   <button
                     @click="showPreviousImage"
                     class="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-700 transition hover:border-blue-600 hover:text-blue-600"
-                    aria-label="Previous image"
+                    aria-label="Vorheriges Bild"
                   >
                     <ChevronLeftIcon class="h-4 w-4" />
                   </button>
@@ -137,13 +137,13 @@ async function confirmDelete() {
                     @click="selectImage(index)"
                     class="h-2.5 w-2.5 rounded-full transition"
                     :class="index === currentImageIndex ? 'bg-blue-600' : 'bg-gray-300 hover:bg-gray-400'"
-                    :aria-label="`Go to image ${index + 1}`"
+                    :aria-label="`Zu Bild ${index + 1} wechseln`"
                   />
 
                   <button
                     @click="showNextImage"
                     class="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-700 transition hover:border-blue-600 hover:text-blue-600"
-                    aria-label="Next image"
+                    aria-label="Nächstes Bild"
                   >
                     <ChevronRightIcon class="h-4 w-4" />
                   </button>

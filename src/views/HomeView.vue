@@ -132,7 +132,7 @@ function toggleSearch() {
         <div class="mb-3 flex gap-3">
           <Button variant="primary" @click="router.push({ name: 'create-trip-step1' })">
             <PlusIcon class="h-5 w-5" />
-            <span class="ml-2">Add</span>
+            <span class="ml-2">Hinzufügen</span>
           </Button>
           <Button variant="secondary" @click="toggleFilter">
             <FunnelIcon class="h-5 w-5" />
@@ -140,7 +140,7 @@ function toggleSearch() {
           </Button>
           <Button variant="secondary" @click="toggleSearch">
             <MagnifyingGlassIcon class="h-5 w-5" />
-            <span class="ml-2">Search</span>
+            <span class="ml-2">Suchen</span>
           </Button>
         </div>
         <div v-if="showFilter" class="mb-6">

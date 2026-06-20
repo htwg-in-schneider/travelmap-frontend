@@ -9,8 +9,12 @@ export interface CreateTripPayload {
   longitude: number | null
 }
 
-const BASE_URL = 'http://localhost:8081/api/trip'
-const COMMENT_URL = 'http://localhost:8081/api/comment'
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ??
+  'https://travelmap-backend-94cp.onrender.com'
+
+const BASE_URL = `${API_BASE_URL}/api/trip`
+const COMMENT_URL = `${API_BASE_URL}/api/comment`
 
 type TripApiResponse = Omit<Trip, 'commentCount'> & {
   commentCount?: number | null

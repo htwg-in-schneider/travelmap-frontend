@@ -11,6 +11,8 @@ permissions:
 
 jobs:
   build:
+    environment:
+      name: github-pages
     runs-on: ubuntu-latest
     # We only need to build once, so the matrix is removed.
     steps:

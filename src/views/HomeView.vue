@@ -156,15 +156,12 @@ function toggleSearch() {
         <div v-if="loading" class="mt-8 text-gray-500">Laden...</div>
         <div v-else-if="error" class="mt-8 text-red-500">{{ error }}</div>
         <div v-else class="flex flex-1 flex-col justify-center pb-6">
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div class="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 sm:grid-cols-3 sm:gap-3">
             <TravelCard
               v-for="trip in visibleTrips"
               :key="trip.id"
               :id="trip.id"
               :title="trip.title"
-              :date="trip.date"
-              :text="trip.text"
-              :comment-count="trip.commentCount"
             />
           </div>
         </div>

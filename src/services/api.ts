@@ -16,6 +16,7 @@ const API_BASE_URL =
 
 const BASE_URL = `${API_BASE_URL}/api/trip`
 const COMMENT_URL = `${API_BASE_URL}/api/comment`
+const ME_URL = `${API_BASE_URL}/api/me`
 
 type TripApiResponse = Omit<Trip, 'commentCount'> & {
   commentCount?: number | null
@@ -131,6 +132,19 @@ export async function deleteTrip(id: number): Promise<void> {
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`)
   }
+}
+
+export interface MeResponse {
+  displayName: string
+  admin: boolean
+}
+
+export async function fetchMe(): Promise<MeResponse> {
+  const response = await fetch(ME_URL, { headers: await authHeaders() })
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+  return response.json()
 }
 
 export async function fetchCommentsByTrip(id: string | string[]): Promise<Comment[]> {

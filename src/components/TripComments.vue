@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
-import { type Comment, userName } from '@/data'
+import { type Comment } from '@/data'
 import { fetchCommentsByTrip, createComment } from '@/services/api'
+import { auth0 } from '@/auth0'
 import { PaperAirplaneIcon, UserIcon } from '@heroicons/vue/24/solid'
+
+const { isAuthenticated } = auth0
 
 const props = defineProps<{
   tripId: string | string[]
@@ -52,7 +55,6 @@ async function postComment() {
   try {
     await createComment({
       text,
-      userName,
       trip: { id: resolveTripId() },
     })
     newCommentText.value = ''
@@ -83,7 +85,7 @@ watch(() => props.tripId, () => {
   <div id="comments" class="mt-10">
     <h3 class="mb-4 text-xl font-semibold text-gray-900">Kommentare</h3>
 
-    <div class="mb-4 flex items-end gap-2">
+    <div v-if="isAuthenticated" class="mb-4 flex items-end gap-2">
       <div class="flex-1">
         <input
           v-model="newCommentText"
@@ -102,6 +104,15 @@ watch(() => props.tripId, () => {
         <PaperAirplaneIcon class="h-5 w-5" />
       </button>
     </div>
+    <div
+      v-else
+      class="mb-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500"
+    >
+      <button class="font-medium text-blue-600 hover:underline" @click="auth0.loginWithRedirect()">
+        Anmelden
+      </button>
+      , um einen Kommentar zu schreiben.
+    </div>
 
     <div v-if="postError" class="mb-3 text-sm text-red-500">{{ postError }}</div>
 
@@ -116,7 +127,7 @@ watch(() => props.tripId, () => {
         <div class="mb-1 flex items-center justify-between">
           <div class="flex items-center gap-1.5">
             <UserIcon class="h-4 w-4 text-gray-500" />
-            <h5 class="font-semibold text-gray-900">{{ comment.userName }}</h5>
+            <h5 class="font-semibold text-gray-900">{{ comment.authorName ?? 'Anonym' }}</h5>
           </div>
         </div>
         <p class="text-sm text-gray-600">{{ comment.text }}</p>

@@ -7,10 +7,11 @@ import TravelCard from '@/components/TravelCard.vue'
 import TripFilter from '@/components/TripFilter.vue'
 import TripSearch from '@/components/TripSearch.vue'
 import Map from '@/components/Map.vue'
-import { userName, type Trip } from '@/data'
+import { type Trip } from '@/data'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { fetchTrips as apiFetchTrips } from '@/services/api'
 import { useRouter } from 'vue-router'
+import { auth0 } from '@/auth0'
 import { getContinentByCountryCode, type Continent } from '@/utils/continents'
 import { parseDateTime } from '@/utils/date'
 
@@ -126,7 +127,10 @@ function toggleSearch() {
       <Navbar />
 
       <main class="flex-1">
-        <h2 class="mt-8 mb-6 text-2xl text-gray-900">Willkommen zurück, {{ userName }}! 🌍</h2>
+        <h2 class="mt-8 mb-6 text-2xl text-gray-900">
+          <template v-if="auth0.isAuthenticated.value">Willkommen zurück, {{ auth0.user.value?.name }}! 🌍</template>
+          <template v-else>Willkommen bei Travelmap! 🌍</template>
+        </h2>
 
         <Map :trips="visibleTrips" class="my-6 h-128 w-full rounded-lg" />
         <div class="mb-3 flex gap-3">

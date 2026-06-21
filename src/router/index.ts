@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { authGuard } from '@auth0/auth0-vue'
 import HomeView from '@/views/HomeView.vue'
 import TripDetail from '@/views/TripDetail.vue'
 import CreateTripStep1 from '@/views/CreateTripStep1.vue'
@@ -34,16 +35,19 @@ const router = createRouter({
       path: '/trip/create/1',
       name: 'create-trip-step1',
       component: CreateTripStep1,
+      beforeEnter: authGuard,
     },
     {
       path: '/trip/create/2',
       name: 'create-trip-step2',
       component: CreateTripStep2,
+      beforeEnter: authGuard,
     },
     {
       path: '/trip/:id/edit',
       name: 'edit-trip',
       component: EditTripView,
+      beforeEnter: authGuard,
     },
   ],
 })

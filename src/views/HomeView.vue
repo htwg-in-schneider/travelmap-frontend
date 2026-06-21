@@ -2,6 +2,7 @@
 import { PlusIcon, FunnelIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
+import ContactForm from '@/components/ContactForm.vue'
 import Button from '@/components/Button.vue'
 import TravelCard from '@/components/TravelCard.vue'
 import TripFilter from '@/components/TripFilter.vue'
@@ -169,6 +170,8 @@ function toggleSearch() {
             />
           </div>
         </div>
+
+        <ContactForm />
       </main>
 
       <Footer />

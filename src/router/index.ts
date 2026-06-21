@@ -10,6 +10,8 @@ import CreateTripStep2 from '@/views/CreateTripStep2.vue'
 import EditTripView from '@/views/EditTripView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import AdminUsersView from '@/views/AdminUsersView.vue'
+import ImpressumView from '@/views/ImpressumView.vue'
+import DatenschutzView from '@/views/DatenschutzView.vue'
 
 function waitForAuthReady(): Promise<void> {
   if (!auth0.isLoading.value) return Promise.resolve()
@@ -97,6 +99,16 @@ const router = createRouter({
       name: 'admin-users',
       component: AdminUsersView,
       beforeEnter: adminGuard,
+    },
+    {
+      path: '/impressum',
+      name: 'impressum',
+      component: ImpressumView,
+    },
+    {
+      path: '/datenschutz',
+      name: 'datenschutz',
+      component: DatenschutzView,
     },
   ],
 })

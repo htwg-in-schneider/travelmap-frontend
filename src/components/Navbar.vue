@@ -68,6 +68,21 @@ function signOut() {
               Admin
             </span>
           </div>
+          <router-link
+            :to="{ name: 'profile' }"
+            class="block w-full rounded-lg px-2 py-1.5 text-left text-sm text-gray-700 transition hover:bg-gray-100"
+            @click="menuOpen = false"
+          >
+            Mein Profil
+          </router-link>
+          <router-link
+            v-if="isAdmin"
+            :to="{ name: 'admin-users' }"
+            class="block w-full rounded-lg px-2 py-1.5 text-left text-sm text-gray-700 transition hover:bg-gray-100"
+            @click="menuOpen = false"
+          >
+            Benutzerverwaltung
+          </router-link>
           <button
             @click="signOut"
             class="w-full rounded-lg px-2 py-1.5 text-left text-sm text-gray-700 transition hover:bg-gray-100"

@@ -17,6 +17,7 @@ const API_BASE_URL =
 const BASE_URL = `${API_BASE_URL}/api/trip`
 const COMMENT_URL = `${API_BASE_URL}/api/comment`
 const ME_URL = `${API_BASE_URL}/api/me`
+const ADMIN_USERS_URL = `${API_BASE_URL}/api/admin/users`
 
 type TripApiResponse = Omit<Trip, 'commentCount'> & {
   commentCount?: number | null
@@ -136,11 +137,52 @@ export async function deleteTrip(id: number): Promise<void> {
 
 export interface MeResponse {
   displayName: string
+  street: string | null
+  postalCode: string | null
+  city: string | null
+  country: string | null
   admin: boolean
+}
+
+export interface UpdateProfilePayload {
+  displayName: string
+  street: string | null
+  postalCode: string | null
+  city: string | null
+  country: string | null
 }
 
 export async function fetchMe(): Promise<MeResponse> {
   const response = await fetch(ME_URL, { headers: await authHeaders() })
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+  return response.json()
+}
+
+export async function updateMe(payload: UpdateProfilePayload): Promise<MeResponse> {
+  const response = await fetch(ME_URL, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+    body: JSON.stringify(payload),
+  })
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+  return response.json()
+}
+
+export interface AdminUser {
+  id: number
+  displayName: string
+  street: string | null
+  postalCode: string | null
+  city: string | null
+  country: string | null
+}
+
+export async function fetchAdminUsers(): Promise<AdminUser[]> {
+  const response = await fetch(ADMIN_USERS_URL, { headers: await authHeaders() })
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`)
   }

@@ -153,7 +153,7 @@ async function confirmDelete() {
           </div>
 
           <div class="mt-4 flex items-center justify-between">
-            <div class="flex items-center gap-2">
+            <div v-if="trip.canEdit" class="flex items-center gap-2">
               <button
                 @click="goToEdit"
                 class="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 transition hover:border-blue-600 hover:text-blue-600"
@@ -169,7 +169,7 @@ async function confirmDelete() {
                 <TrashIcon class="h-4 w-4" />
               </button>
             </div>
-            <p class="text-right text-sm text-gray-500">{{ formatDateOnly(trip.date) }}</p>
+            <p class="ml-auto text-right text-sm text-gray-500">{{ formatDateOnly(trip.date) }}</p>
           </div>
         </div>
 

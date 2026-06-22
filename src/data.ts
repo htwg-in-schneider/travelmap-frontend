@@ -1,5 +1,3 @@
-export const userName = 'Philipp'
-
 export interface Trip {
   id: number
   title: string
@@ -9,10 +7,13 @@ export interface Trip {
   latitude: number | null
   longitude: number | null
   commentCount: number
+  ownerName: string | null
+  canEdit: boolean
 }
 
 export interface Comment {
   id: number
   text: string
-  userName: string
+  authorName: string | null
+  canDelete: boolean
 }

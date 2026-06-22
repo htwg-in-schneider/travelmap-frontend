@@ -10,9 +10,11 @@ export interface CreateTripPayload {
   longitude: number | null
 }
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ??
-  'https://travelmap-backend-94cp.onrender.com'
+const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL
+if (typeof rawApiBaseUrl !== 'string' || rawApiBaseUrl.trim() === '') {
+  throw new Error('VITE_API_BASE_URL environment variable is required but not set')
+}
+const API_BASE_URL = rawApiBaseUrl.replace(/\/$/, '')
 
 const BASE_URL = `${API_BASE_URL}/api/trip`
 const COMMENT_URL = `${API_BASE_URL}/api/comment`

@@ -29,12 +29,13 @@ See [Vite Configuration Reference](https://vite.dev/config/).
 npm install
 ```
 
-Create a local `.env` file from `.env.example` and set:
+Create a local `.env` file and set:
 
 ```sh
 VITE_MAPBOX_KEY=your_mapbox_key
-VITE_API_BASE_URL=https://travelmap-backend-94cp.onrender.com
 ```
+
+`VITE_API_BASE_URL` is required; it is already set in `.env.development` for local development (`http://localhost:8081`) and in `.env.production` for production builds (`https://travelmap-backend-94cp.onrender.com`).
 
 ### Compile and Hot-Reload for Development
 

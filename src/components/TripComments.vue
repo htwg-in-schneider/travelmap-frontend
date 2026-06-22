@@ -74,6 +74,14 @@ function onKeydown(event: KeyboardEvent) {
   }
 }
 
+async function login() {
+  try {
+    await auth0.loginWithRedirect()
+  } catch (err) {
+    console.error('[TripComments] loginWithRedirect failed:', err)
+  }
+}
+
 onMounted(() => loadComments())
 
 watch(() => props.tripId, () => {
@@ -108,7 +116,7 @@ watch(() => props.tripId, () => {
       v-else
       class="mb-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500"
     >
-      <button class="font-medium text-blue-600 hover:underline" @click="auth0.loginWithRedirect()">
+      <button class="font-medium text-blue-600 hover:underline" @click="login">
         Anmelden
       </button>
       , um einen Kommentar zu schreiben.

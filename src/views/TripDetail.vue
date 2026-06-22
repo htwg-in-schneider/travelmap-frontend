@@ -34,7 +34,6 @@ async function loadTrip() {
   }
   try {
     trip.value = await fetchTripById(id)
-    console.log(trip.value)
   } catch (err) {
     console.error('Error fetching trip:', err)
     error.value = 'Fehler beim Laden der Reise.'

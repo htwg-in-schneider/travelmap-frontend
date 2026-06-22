@@ -10,8 +10,12 @@ const { isAdmin } = useUserRole()
 
 const menuOpen = ref(false)
 
-function login() {
-  auth0.loginWithRedirect()
+async function login() {
+  try {
+    await auth0.loginWithRedirect()
+  } catch (err) {
+    console.error('[Navbar] loginWithRedirect failed:', err)
+  }
 }
 
 function signOut() {

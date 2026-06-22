@@ -5,6 +5,7 @@ import { auth0 } from '@/auth0'
 import { fetchMe } from '@/services/api'
 import HomeView from '@/views/HomeView.vue'
 import TripDetail from '@/views/TripDetail.vue'
+import CreateTripStep0 from '@/views/CreateTripStep0.vue'
 import CreateTripStep1 from '@/views/CreateTripStep1.vue'
 import CreateTripStep2 from '@/views/CreateTripStep2.vue'
 import EditTripView from '@/views/EditTripView.vue'
@@ -70,6 +71,12 @@ const router = createRouter({
       path: '/trip/:id',
       name: 'trip-detail',
       component: TripDetail,
+    },
+    {
+      path: '/trip/create',
+      name: 'create-trip-step0',
+      component: CreateTripStep0,
+      beforeEnter: authGuard,
     },
     {
       path: '/trip/create/1',

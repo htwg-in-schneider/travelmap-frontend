@@ -104,10 +104,7 @@ function onSearch(params: { query: string }) {
   }, searchDebounceMs)
 }
 
-function onFilter(params: {
-  continent: Continent | ''
-  orderBy: OrderBy
-}) {
+function onFilter(params: { continent: Continent | ''; orderBy: OrderBy }) {
   selectedContinent.value = params.continent
   orderBy.value = params.orderBy
 }
@@ -128,13 +125,15 @@ function toggleSearch() {
 
       <main class="flex-1">
         <h2 class="mt-8 mb-6 text-2xl text-gray-900">
-          <template v-if="auth0.isAuthenticated.value">Willkommen zurück, {{ auth0.user.value?.name }}! 🌍</template>
+          <template v-if="auth0.isAuthenticated.value"
+            >Willkommen zurück, {{ auth0.user.value?.name }}! 🌍</template
+          >
           <template v-else>Willkommen bei Travelmap! 🌍</template>
         </h2>
 
         <Map :trips="visibleTrips" class="my-6 h-128 w-full rounded-lg" />
         <div class="mb-3 flex gap-3">
-          <Button variant="primary" @click="router.push({ name: 'create-trip-step1' })">
+          <Button variant="primary" @click="router.push({ name: 'create-trip-step0' })">
             <PlusIcon class="h-5 w-5" />
             <span class="ml-2">Hinzufügen</span>
           </Button>
@@ -148,11 +147,7 @@ function toggleSearch() {
           </Button>
         </div>
         <div v-if="showFilter" class="mb-6">
-          <TripFilter
-            :continent="selectedContinent"
-            :order-by="orderBy"
-            @filter="onFilter"
-          />
+          <TripFilter :continent="selectedContinent" :order-by="orderBy" @filter="onFilter" />
         </div>
         <div v-if="showSearch" class="mb-6">
           <TripSearch :search-term="searchTerm" @search="onSearch" />
@@ -169,7 +164,6 @@ function toggleSearch() {
             />
           </div>
         </div>
-
       </main>
 
       <Footer />

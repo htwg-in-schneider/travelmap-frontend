@@ -6,7 +6,7 @@ import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { useCreateTripStore } from '@/stores/createTrip'
 import { useMapStore } from '@/stores/map'
-import { createTrip } from '@/services/api'
+import { createTrip, requestImageUploadUrls, uploadImageToR2, saveTripImages } from '@/services/api'
 
 const router = useRouter()
 const store = useCreateTripStore()
@@ -39,8 +39,7 @@ async function reverseGeocode(lng: number, lat: number) {
     }
 
     const countryContext = feature.context?.find((c: { id: string }) => c.id.startsWith('country'))
-    const code: string | undefined =
-      countryContext?.short_code ?? feature.properties?.short_code
+    const code: string | undefined = countryContext?.short_code ?? feature.properties?.short_code
 
     if (code) {
       store.countryCode = code.slice(-2).toLowerCase()
@@ -58,7 +57,9 @@ function handleMapClick(e: mapboxgl.MapMouseEvent) {
   if (marker.value) {
     marker.value.setLngLat([lng, lat])
   } else {
-    marker.value = new mapboxgl.Marker({ color: '#2563eb' }).setLngLat([lng, lat]).addTo(map.value as any)
+    marker.value = new mapboxgl.Marker({ color: '#2563eb' })
+      .setLngLat([lng, lat])
+      .addTo(map.value as any)
   }
 
   reverseGeocode(lng, lat)
@@ -96,7 +97,7 @@ async function submit() {
   saving.value = true
   error.value = ''
   try {
-    await createTrip({
+    const trip = await createTrip({
       title: locationName.value.trim(),
       date: new Date().toISOString(),
       text: store.text,
@@ -104,6 +105,23 @@ async function submit() {
       latitude: store.lat,
       longitude: store.lng,
     })
+
+    if (store.images.length > 0) {
+      const presignedUploads = await requestImageUploadUrls(trip.id, store.images)
+      const imagesToSave: { url: string; filename: string }[] = []
+
+      for (const [index, upload] of presignedUploads.entries()) {
+        const file = store.images[index]
+        if (!file) continue
+        await uploadImageToR2(upload, file)
+        imagesToSave.push({ url: upload.publicUrl, filename: file.name })
+      }
+
+      if (imagesToSave.length > 0) {
+        await saveTripImages(trip.id, imagesToSave)
+      }
+    }
+
     if (store.lng !== null && store.lat !== null) {
       mapStore.setPendingFlyTo([store.lng, store.lat], 6)
     }
@@ -133,7 +151,6 @@ async function submit() {
 
     <div class="mx-auto w-full max-w-lg px-6 pt-5 pb-8">
       <p class="mb-2 text-sm text-gray-500">Tippe auf die Karte, um einen Standort zu markieren.</p>
-
 
       <div v-if="error" class="mt-3 text-sm text-red-500">{{ error }}</div>
 

@@ -10,8 +10,7 @@ const store = useCreateTripStore()
 const canProceed = computed(() => store.title.trim().length > 0 && store.text.trim().length > 0)
 
 function goBack() {
-  store.reset()
-  router.push({ name: 'home' })
+  router.push({ name: 'create-trip-step0' })
 }
 
 function next() {

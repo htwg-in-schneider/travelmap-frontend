@@ -9,6 +9,7 @@ export interface Trip {
   commentCount: number
   ownerName: string | null
   canEdit: boolean
+  imageUrls: string[]
 }
 
 export interface Comment {

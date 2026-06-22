@@ -1,10 +1,3 @@
-<script setup lang="ts">
-import { ref } from 'vue'
-import ContactForm from '@/components/ContactForm.vue'
-
-const showContact = ref(false)
-</script>
-
 <template>
   <footer class="mt-8 border-t border-gray-200 py-6">
     <div class="flex flex-col items-center justify-between gap-3 text-sm text-gray-500 sm:flex-row">
@@ -16,18 +9,10 @@ const showContact = ref(false)
         <router-link :to="{ name: 'datenschutz' }" class="transition-colors hover:text-gray-900">
           Datenschutz
         </router-link>
-        <button
-          type="button"
-          class="transition-colors hover:text-gray-900"
-          @click="showContact = !showContact"
-        >
+        <router-link :to="{ name: 'kontakt' }" class="transition-colors hover:text-gray-900">
           Kontakt
-        </button>
+        </router-link>
       </div>
-    </div>
-
-    <div v-if="showContact" class="mx-auto mt-6 max-w-lg">
-      <ContactForm />
     </div>
   </footer>
 </template>

@@ -47,9 +47,9 @@ const router = useRouter()
 
           <h2 class="text-base font-semibold text-gray-900">Kontaktformular</h2>
           <p>
-            Das Kontaktformular auf der Startseite öffnet lediglich dein eigenes
-            E-Mail-Programm (mailto-Link) - die Eingaben werden nicht an unseren Server
-            übertragen oder gespeichert.
+            Das Kontaktformular auf der <router-link class="text-blue-600 hover:underline" :to="{ name: 'kontakt' }">Kontakt-Seite</router-link>
+            öffnet lediglich dein eigenes E-Mail-Programm (mailto-Link) - die Eingaben werden
+            nicht an unseren Server übertragen oder gespeichert.
           </p>
 
           <h2 class="text-base font-semibold text-gray-900">Deine Rechte</h2>

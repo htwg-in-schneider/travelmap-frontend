@@ -12,6 +12,7 @@ import ProfileView from '@/views/ProfileView.vue'
 import AdminUsersView from '@/views/AdminUsersView.vue'
 import ImpressumView from '@/views/ImpressumView.vue'
 import DatenschutzView from '@/views/DatenschutzView.vue'
+import KontaktView from '@/views/KontaktView.vue'
 
 function waitForAuthReady(): Promise<void> {
   if (!auth0.isLoading.value) return Promise.resolve()
@@ -109,6 +110,11 @@ const router = createRouter({
       path: '/datenschutz',
       name: 'datenschutz',
       component: DatenschutzView,
+    },
+    {
+      path: '/kontakt',
+      name: 'kontakt',
+      component: KontaktView,
     },
   ],
 })

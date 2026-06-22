@@ -9,9 +9,9 @@ import TripFilter from '@/components/TripFilter.vue'
 import TripSearch from '@/components/TripSearch.vue'
 import Map from '@/components/Map.vue'
 import { type Trip } from '@/data'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { fetchTrips as apiFetchTrips } from '@/services/api'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { auth0 } from '@/auth0'
 import { getContinentByCountryCode, type Continent } from '@/utils/continents'
 import { parseDateTime } from '@/utils/date'
@@ -19,12 +19,14 @@ import { parseDateTime } from '@/utils/date'
 type OrderBy = 'newest' | 'oldest' | 'most-commented'
 
 const router = useRouter()
+const route = useRoute()
 
 const trips = ref<Trip[]>([])
 const loading = ref(true)
 const error = ref('')
 const showFilter = ref(false)
 const showSearch = ref(false)
+const showContact = ref(false)
 const searchTerm = ref('')
 const selectedContinent = ref<Continent | ''>('')
 const orderBy = ref<OrderBy>('newest')
@@ -61,7 +63,19 @@ const visibleTrips = computed(() => {
 
 onMounted(async () => {
   await loadTrips()
+  if (route.hash === '#contact') {
+    showContact.value = true
+  }
 })
+
+watch(
+  () => route.hash,
+  (hash) => {
+    if (hash === '#contact') {
+      showContact.value = true
+    }
+  },
+)
 
 onUnmounted(() => {
   if (searchTimeout) {
@@ -171,7 +185,20 @@ function toggleSearch() {
           </div>
         </div>
 
-        <ContactForm />
+        <section id="contact" class="mt-12 scroll-mt-24">
+          <button
+            v-if="!showContact"
+            type="button"
+            class="text-xl font-semibold text-gray-900 transition-colors hover:text-blue-600"
+            @click="showContact = true"
+          >
+            Kontakt
+          </button>
+          <template v-else>
+            <h2 class="mb-4 text-xl font-semibold text-gray-900">Kontakt</h2>
+            <ContactForm />
+          </template>
+        </section>
       </main>
 
       <Footer />

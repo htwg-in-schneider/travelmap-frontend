@@ -23,8 +23,7 @@ function send() {
 </script>
 
 <template>
-  <section id="contact" class="mt-12">
-    <h2 class="mb-4 text-xl font-semibold text-gray-900">Kontakt</h2>
+  <section>
     <p class="mb-6 text-sm text-gray-600">
       Fragen, Feedback oder Probleme? Schreib uns - die Nachricht öffnet sich in deinem
       E-Mail-Programm.

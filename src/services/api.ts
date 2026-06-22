@@ -21,6 +21,12 @@ const COMMENT_URL = `${API_BASE_URL}/api/comment`
 const ME_URL = `${API_BASE_URL}/api/me`
 const ADMIN_USERS_URL = `${API_BASE_URL}/api/admin/users`
 
+export interface PresignedUpload {
+  uploadUrl: string
+  publicUrl: string
+  key: string
+}
+
 type TripApiResponse = Omit<Trip, 'commentCount'> & {
   commentCount?: number | null
 }
@@ -135,6 +141,53 @@ export async function deleteTrip(id: number): Promise<void> {
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`)
   }
+}
+
+export async function requestImageUploadUrls(
+  tripId: number,
+  files: File[],
+): Promise<PresignedUpload[]> {
+  const payload = files.map((file) => ({
+    filename: file.name,
+    contentType: file.type,
+    size: file.size,
+  }))
+  const response = await fetch(`${BASE_URL}/${tripId}/images/upload-urls`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+    body: JSON.stringify(payload),
+  })
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+  return response.json()
+}
+
+export async function uploadImageToR2(presignedUpload: PresignedUpload, file: File): Promise<void> {
+  const response = await fetch(presignedUpload.uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type },
+    body: file,
+  })
+  if (!response.ok) {
+    throw new Error(`Upload to R2 failed! status: ${response.status}`)
+  }
+}
+
+export async function saveTripImages(
+  tripId: number,
+  images: { url: string; filename: string }[],
+): Promise<Trip> {
+  const response = await fetch(`${BASE_URL}/${tripId}/images`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+    body: JSON.stringify(images),
+  })
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+  const trip: TripApiResponse = await response.json()
+  return normalizeTrip(trip)
 }
 
 export interface MeResponse {

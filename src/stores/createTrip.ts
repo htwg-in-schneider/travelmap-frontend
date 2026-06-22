@@ -7,6 +7,15 @@ export const useCreateTripStore = defineStore('createTrip', () => {
   const lat = ref<number | null>(null)
   const lng = ref<number | null>(null)
   const countryCode = ref('')
+  const images = ref<File[]>([])
+
+  function addImages(files: File[]) {
+    images.value.push(...files)
+  }
+
+  function removeImage(index: number) {
+    images.value.splice(index, 1)
+  }
 
   function reset() {
     title.value = ''
@@ -14,7 +23,8 @@ export const useCreateTripStore = defineStore('createTrip', () => {
     lat.value = null
     lng.value = null
     countryCode.value = ''
+    images.value = []
   }
 
-  return { title, text, lat, lng, countryCode, reset }
+  return { title, text, lat, lng, countryCode, images, addImages, removeImage, reset }
 })

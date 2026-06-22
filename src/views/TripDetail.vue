@@ -19,9 +19,9 @@ const currentImageIndex = ref(0)
 const showDeleteDialog = ref(false)
 const deleting = ref(false)
 
-const images = Array.from({ length: 6 }, () => placeholder)
+const images = computed(() => trip.value?.imageUrls ?? [])
 
-const currentImage = computed(() => images[currentImageIndex.value] ?? placeholder)
+const currentImage = computed(() => images.value[currentImageIndex.value] ?? placeholder)
 
 onMounted(async () => loadTrip())
 
@@ -44,12 +44,12 @@ async function loadTrip() {
 
 function showPreviousImage() {
   currentImageIndex.value =
-    currentImageIndex.value === 0 ? images.length - 1 : currentImageIndex.value - 1
+    currentImageIndex.value === 0 ? images.value.length - 1 : currentImageIndex.value - 1
 }
 
 function showNextImage() {
   currentImageIndex.value =
-    currentImageIndex.value === images.length - 1 ? 0 : currentImageIndex.value + 1
+    currentImageIndex.value === images.value.length - 1 ? 0 : currentImageIndex.value + 1
 }
 
 function selectImage(index: number) {
@@ -99,15 +99,24 @@ async function confirmDelete() {
             >
               <span
                 :class="'fi-' + trip.countryCode"
-                style="display: block; width: 100%; height: 100%; background-size: cover; background-position: center; background-repeat: no-repeat;"
+                style="
+                  display: block;
+                  width: 100%;
+                  height: 100%;
+                  background-size: cover;
+                  background-position: center;
+                  background-repeat: no-repeat;
+                "
               />
             </div>
           </div>
 
           <p class="mt-6 text-gray-700">{{ trip.text }}</p>
 
-          <div class="mt-8">
-            <div class="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-gray-200 bg-white">
+          <div v-if="images.length > 0" class="mt-8">
+            <div
+              class="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-gray-200 bg-white"
+            >
               <div class="bg-gray-100 p-4 sm:p-5">
                 <img
                   :src="currentImage"
@@ -135,7 +144,9 @@ async function confirmDelete() {
                     :key="`${image}-${index}`"
                     @click="selectImage(index)"
                     class="h-2.5 w-2.5 rounded-full transition"
-                    :class="index === currentImageIndex ? 'bg-blue-600' : 'bg-gray-300 hover:bg-gray-400'"
+                    :class="
+                      index === currentImageIndex ? 'bg-blue-600' : 'bg-gray-300 hover:bg-gray-400'
+                    "
                     :aria-label="`Zu Bild ${index + 1} wechseln`"
                   />
 
@@ -176,7 +187,7 @@ async function confirmDelete() {
           <h1 class="text-2xl text-gray-900">Reise nicht gefunden</h1>
         </div>
 
-        <TripComments v-if="trip" :tripId="(route.params.id as string | string[])" />
+        <TripComments v-if="trip" :tripId="route.params.id as string | string[]" />
 
         <!-- Delete Confirmation Dialog -->
         <div
@@ -187,7 +198,8 @@ async function confirmDelete() {
           <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
             <h2 class="text-lg font-semibold text-gray-900">Reise löschen?</h2>
             <p class="mt-2 text-sm text-gray-600">
-              Bist du sicher, dass du diese Reise löschen möchtest? Alle zugehörigen Kommentare werden ebenfalls gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
+              Bist du sicher, dass du diese Reise löschen möchtest? Alle zugehörigen Kommentare
+              werden ebenfalls gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
             </p>
             <div class="mt-6 flex justify-end gap-3">
               <button

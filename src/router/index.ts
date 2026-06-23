@@ -108,12 +108,6 @@ const router = createRouter({
       beforeEnter: authGuard,
     },
     {
-      path: '/profile',
-      name: 'profile',
-      component: ProfileView,
-      beforeEnter: authGuard,
-    },
-    {
       path: '/admin/users',
       name: 'admin-users',
       component: AdminUsersView,

@@ -1,4 +1,4 @@
-import { type Trip, type Comment } from '@/data'
+import { type Trip, type Comment, type UserSummary } from '@/data'
 import { auth0 } from '@/auth0'
 
 export interface CreateTripPayload {
@@ -18,6 +18,8 @@ const API_BASE_URL = rawApiBaseUrl.replace(/\/$/, '')
 
 const BASE_URL = `${API_BASE_URL}/api/trip`
 const COMMENT_URL = `${API_BASE_URL}/api/comment`
+const FEED_URL = `${API_BASE_URL}/api/feed`
+const USER_URL = `${API_BASE_URL}/api/user`
 const ME_URL = `${API_BASE_URL}/api/me`
 const ADMIN_USERS_URL = `${API_BASE_URL}/api/admin/users`
 
@@ -25,10 +27,6 @@ export interface PresignedUpload {
   uploadUrl: string
   publicUrl: string
   key: string
-}
-
-type TripApiResponse = Omit<Trip, 'commentCount'> & {
-  commentCount?: number | null
 }
 
 async function authHeaders(): Promise<Record<string, string>> {
@@ -42,105 +40,53 @@ async function authHeaders(): Promise<Record<string, string>> {
   }
 }
 
-async function fetchCommentCountByTrip(id: number): Promise<number> {
-  const response = await fetch(`${COMMENT_URL}/trip/${id}/count`)
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`)
-  }
-
-  const data: unknown = await response.json()
-
-  if (typeof data === 'number') return data
-  if (typeof data === 'string') return Number(data)
-
-  if (
-    typeof data === 'object' &&
-    data !== null &&
-    'count' in data &&
-    typeof (data as { count: unknown }).count === 'number'
-  ) {
-    return (data as { count: number }).count
-  }
-
-  throw new Error(`Unexpected comment count payload for trip ${id}`)
+async function getJson<T>(url: string): Promise<T> {
+  const response = await fetch(url, { headers: await authHeaders() })
+  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+  return response.json()
 }
 
-async function normalizeTrip(trip: TripApiResponse): Promise<Trip> {
-  let commentCount = 0
-
-  if (typeof trip.commentCount === 'number') {
-    commentCount = trip.commentCount
-  } else {
-    try {
-      commentCount = await fetchCommentCountByTrip(trip.id)
-    } catch (err) {
-      console.error(`Failed to fetch comment count for trip ${trip.id}:`, err)
-    }
-  }
-
-  return {
-    ...trip,
-    commentCount,
-  }
+async function sendJson<T>(method: string, url: string, body?: unknown): Promise<T> {
+  const response = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+  if (response.status === 204) return undefined as unknown as T
+  return response.json()
 }
+
+// ---------------------------------------------------------------------------
+// Trips
+// ---------------------------------------------------------------------------
 
 export async function fetchTrips(params?: { q?: string }): Promise<Trip[]> {
   const url = new URL(BASE_URL)
   if (params?.q) url.searchParams.set('q', params.q)
-  const response = await fetch(url.toString(), { headers: await authHeaders() })
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`)
-  }
-  const trips: TripApiResponse[] = await response.json()
-  return Promise.all(trips.map((trip) => normalizeTrip(trip)))
+  return getJson<Trip[]>(url.toString())
 }
 
 export async function fetchTripById(id: string | string[]): Promise<Trip | null> {
   const response = await fetch(`${BASE_URL}/${id}`, { headers: await authHeaders() })
   if (!response.ok) {
-    if (response.status === 404) {
-      return null
-    }
+    if (response.status === 404) return null
     throw new Error(`HTTP error! status: ${response.status}`)
   }
-  const trip: TripApiResponse = await response.json()
-  return normalizeTrip(trip)
+  return response.json()
 }
 
 export async function createTrip(payload: CreateTripPayload): Promise<Trip> {
-  const response = await fetch(BASE_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-    body: JSON.stringify(payload),
-  })
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`)
-  }
-  const trip: TripApiResponse = await response.json()
-  return normalizeTrip(trip)
+  return sendJson('POST', BASE_URL, payload)
 }
 
 export async function updateTrip(id: number, payload: CreateTripPayload): Promise<Trip> {
-  const response = await fetch(`${BASE_URL}/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-    body: JSON.stringify(payload),
-  })
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`)
-  }
-  const trip: TripApiResponse = await response.json()
-  return normalizeTrip(trip)
+  return sendJson('PUT', `${BASE_URL}/${id}`, payload)
 }
 
 export async function deleteTrip(id: number): Promise<void> {
-  const response = await fetch(`${BASE_URL}/${id}`, {
-    method: 'DELETE',
-    headers: await authHeaders(),
-  })
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`)
-  }
+  const response = await fetch(`${BASE_URL}/${id}`, { method: 'DELETE', headers: await authHeaders() })
+  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
 }
 
 export async function requestImageUploadUrls(
@@ -152,15 +98,7 @@ export async function requestImageUploadUrls(
     contentType: file.type,
     size: file.size,
   }))
-  const response = await fetch(`${BASE_URL}/${tripId}/images/upload-urls`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-    body: JSON.stringify(payload),
-  })
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`)
-  }
-  return response.json()
+  return sendJson('POST', `${BASE_URL}/${tripId}/images/upload-urls`, payload)
 }
 
 export async function uploadImageToR2(presignedUpload: PresignedUpload, file: File): Promise<void> {
@@ -169,38 +107,93 @@ export async function uploadImageToR2(presignedUpload: PresignedUpload, file: Fi
     headers: { 'Content-Type': file.type },
     body: file,
   })
-  if (!response.ok) {
-    throw new Error(`Upload to R2 failed! status: ${response.status}`)
-  }
+  if (!response.ok) throw new Error(`Upload to R2 failed! status: ${response.status}`)
 }
 
 export async function saveTripImages(
   tripId: number,
   images: { url: string; filename: string }[],
 ): Promise<Trip> {
-  const response = await fetch(`${BASE_URL}/${tripId}/images`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-    body: JSON.stringify(images),
-  })
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`)
-  }
-  const trip: TripApiResponse = await response.json()
-  return normalizeTrip(trip)
+  return sendJson('POST', `${BASE_URL}/${tripId}/images`, images)
 }
 
+// ---------------------------------------------------------------------------
+// Feed (Instagram-style)
+// ---------------------------------------------------------------------------
+
+/** Feed of trips posted by the users I follow (falls back to all trips). */
+export async function fetchFeed(): Promise<Trip[]> {
+  return getJson<Trip[]>(FEED_URL)
+}
+
+/** Explore stream: all recent trips regardless of follow state. */
+export async function fetchExplore(): Promise<Trip[]> {
+  return getJson<Trip[]>(`${FEED_URL}?explore=true`)
+}
+
+export interface LikeState {
+  likeCount: number
+  likedByMe: boolean
+}
+
+export async function likeTrip(tripId: number): Promise<LikeState> {
+  return sendJson('POST', `${BASE_URL}/${tripId}/like`)
+}
+
+export async function unlikeTrip(tripId: number): Promise<LikeState> {
+  return sendJson('DELETE', `${BASE_URL}/${tripId}/like`)
+}
+
+// ---------------------------------------------------------------------------
+// Users / profiles / follow
+// ---------------------------------------------------------------------------
+
+export async function fetchUserProfile(username: string): Promise<UserSummary> {
+  return getJson<UserSummary>(`${USER_URL}/${encodeURIComponent(username)}`)
+}
+
+export async function fetchUserTrips(username: string): Promise<Trip[]> {
+  return getJson<Trip[]>(`${USER_URL}/${encodeURIComponent(username)}/trips`)
+}
+
+export async function searchUsers(q: string): Promise<UserSummary[]> {
+  const url = new URL(`${USER_URL}/search`)
+  url.searchParams.set('q', q)
+  return getJson<UserSummary[]>(url.toString())
+}
+
+export async function followUser(username: string): Promise<UserSummary> {
+  return sendJson('POST', `${USER_URL}/${encodeURIComponent(username)}/follow`)
+}
+
+export async function unfollowUser(username: string): Promise<UserSummary> {
+  return sendJson('DELETE', `${USER_URL}/${encodeURIComponent(username)}/follow`)
+}
+
+// ---------------------------------------------------------------------------
+// Me
+// ---------------------------------------------------------------------------
+
 export interface MeResponse {
+  id: number
+  username: string
   displayName: string
+  email: string
+  bio: string
+  avatarUrl: string
   street: string | null
   postalCode: string | null
   city: string | null
   country: string | null
   admin: boolean
+  tripCount: number
+  followingCount: number
+  followerCount: number
 }
 
 export interface UpdateProfilePayload {
-  displayName: string
+  displayName: string | null
+  bio: string | null
   street: string | null
   postalCode: string | null
   city: string | null
@@ -208,48 +201,43 @@ export interface UpdateProfilePayload {
 }
 
 export async function fetchMe(): Promise<MeResponse> {
-  const response = await fetch(ME_URL, { headers: await authHeaders() })
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`)
-  }
-  return response.json()
+  return getJson<MeResponse>(ME_URL)
 }
 
 export async function updateMe(payload: UpdateProfilePayload): Promise<MeResponse> {
-  const response = await fetch(ME_URL, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-    body: JSON.stringify(payload),
-  })
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`)
-  }
-  return response.json()
+  return sendJson('PUT', ME_URL, payload)
 }
 
 export interface AdminUser {
   id: number
+  username: string
   displayName: string
+  email: string
   street: string | null
   postalCode: string | null
   city: string | null
   country: string | null
+  admin: boolean
 }
 
 export async function fetchAdminUsers(): Promise<AdminUser[]> {
-  const response = await fetch(ADMIN_USERS_URL, { headers: await authHeaders() })
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`)
-  }
-  return response.json()
+  return getJson<AdminUser[]>(ADMIN_USERS_URL)
 }
 
+export async function updateAdminUser(
+  id: number,
+  payload: Partial<Pick<AdminUser, 'displayName' | 'street' | 'postalCode' | 'city' | 'country'>>,
+): Promise<AdminUser> {
+  return sendJson('PUT', `${ADMIN_USERS_URL}/${id}`, payload)
+}
+
+// ---------------------------------------------------------------------------
+// Comments
+// ---------------------------------------------------------------------------
+
 export async function fetchCommentsByTrip(id: string | string[]): Promise<Comment[]> {
-  const response = await fetch(`${COMMENT_URL}/trip/${id}`, { headers: await authHeaders() })
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`)
-  }
-  return response.json()
+  const raw = Array.isArray(id) ? id[0] : id
+  return getJson<Comment[]>(`${COMMENT_URL}/trip/${raw}`)
 }
 
 export interface CreateCommentPayload {
@@ -258,13 +246,10 @@ export interface CreateCommentPayload {
 }
 
 export async function createComment(payload: CreateCommentPayload): Promise<Comment> {
-  const response = await fetch(COMMENT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-    body: JSON.stringify(payload),
-  })
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`)
-  }
-  return response.json()
+  return sendJson('POST', COMMENT_URL, payload)
+}
+
+export async function deleteComment(id: number): Promise<void> {
+  const response = await fetch(`${COMMENT_URL}/${id}`, { method: 'DELETE', headers: await authHeaders() })
+  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
 }

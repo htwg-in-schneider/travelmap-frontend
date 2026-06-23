@@ -4,6 +4,7 @@ import { authGuard } from '@auth0/auth0-vue'
 import { auth0 } from '@/auth0'
 import { fetchMe } from '@/services/api'
 import HomeView from '@/views/HomeView.vue'
+import ExploreView from '@/views/ExploreView.vue'
 import TripDetail from '@/views/TripDetail.vue'
 import CreateTripStep0 from '@/views/CreateTripStep0.vue'
 import CreateTripStep1 from '@/views/CreateTripStep1.vue'
@@ -66,6 +67,16 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+    },
+    {
+      path: '/explore',
+      name: 'explore',
+      component: ExploreView,
+    },
+    {
+      path: '/u/:username',
+      name: 'profile-username',
+      component: ProfileView,
     },
     {
       path: '/trip/:id',

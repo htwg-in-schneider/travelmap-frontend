@@ -59,8 +59,11 @@ function addTripMarkers() {
       el.style.border = '3px solid white'
     }
 
-    const marker = new (mapboxgl.Marker as any)({ element: el })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Marker = mapboxgl.Marker as any
+    const marker = new Marker({ element: el })
       .setLngLat([trip.longitude, trip.latitude])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .addTo(map.value as any)
 
     const popup = new mapboxgl.Popup({ offset: 24, closeButton: false }).setHTML(
@@ -71,11 +74,14 @@ function addTripMarkers() {
       router.push({ name: 'trip-detail', params: { id: trip.id.toString() } })
     })
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const genericElement = el as any
     marker.setPopup(popup)
-    ;(el as any).addEventListener('mouseenter', () => marker.togglePopup())
-    ;(el as any).addEventListener('mouseleave', () => marker.togglePopup())
+    genericElement.addEventListener('mouseenter', () => marker.togglePopup())
+    genericElement.addEventListener('mouseleave', () => marker.togglePopup())
 
-    markers.value.push(marker)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(markers.value as any[]).push(marker)
   })
 }
 

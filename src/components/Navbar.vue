@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { auth0 } from '@/auth0'
-import { MagnifyingGlassIcon, UserCircleIcon } from '@heroicons/vue/24/solid'
+import { HomeIcon, MapIcon, UserCircleIcon } from '@heroicons/vue/24/solid'
 import { useUserRole } from '@/composables/useUserRole'
 import logo from '../../assets/travelmap-logo.svg'
 
 const { isAuthenticated, isLoading, user } = auth0
-const { isAdmin } = useUserRole()
+const { isAdmin, username } = useUserRole()
 
 const menuOpen = ref(false)
 
@@ -33,7 +33,22 @@ function signOut() {
       <span class="text-xl text-gray-900">Travelmap</span>
     </router-link>
     <div class="flex items-center gap-4">
-      <MagnifyingGlassIcon class="h-7 w-7 text-gray-800" />
+      <router-link
+        :to="{ name: 'home' }"
+        class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+        aria-label="Feed"
+        title="Feed"
+      >
+        <HomeIcon class="h-6 w-6" />
+      </router-link>
+      <router-link
+        :to="{ name: 'explore' }"
+        class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+        aria-label="Entdecken"
+        title="Entdecken"
+      >
+        <MapIcon class="h-6 w-6" />
+      </router-link>
 
       <button
         v-if="!isLoading && !isAuthenticated"
@@ -73,7 +88,7 @@ function signOut() {
             </span>
           </div>
           <router-link
-            :to="{ name: 'profile' }"
+            :to="username ? { name: 'profile-username', params: { username } } : { name: 'profile' }"
             class="block w-full rounded-lg px-2 py-1.5 text-left text-sm text-gray-700 transition hover:bg-gray-100"
             @click="menuOpen = false"
           >

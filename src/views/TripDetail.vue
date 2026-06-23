@@ -2,8 +2,9 @@
 import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { type Trip } from '@/data'
-import { ChevronLeftIcon, ChevronRightIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/solid'
+import { ChevronLeftIcon, ChevronRightIcon, PencilIcon, TrashIcon, HeartIcon } from '@heroicons/vue/24/solid'
 import { fetchTripById, deleteTrip } from '@/services/api'
+import { useSocialStore } from '@/stores/social'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
 import TripComments from '@/components/TripComments.vue'
@@ -12,16 +13,32 @@ import { formatDateOnly } from '@/utils/date'
 
 const route = useRoute()
 const router = useRouter()
+const social = useSocialStore()
 const trip = ref<Trip | null>(null)
 const loading = ref(true)
 const error = ref('')
 const currentImageIndex = ref(0)
 const showDeleteDialog = ref(false)
 const deleting = ref(false)
+const likeBusy = ref(false)
 
 const images = computed(() => trip.value?.imageUrls ?? [])
 
 const currentImage = computed(() => images.value[currentImageIndex.value] ?? placeholder)
+
+const likeState = computed(() => (trip.value ? social.readLike(trip.value) : { likeCount: 0, likedByMe: false }))
+
+async function toggleLike() {
+  if (!trip.value || likeBusy.value) return
+  likeBusy.value = true
+  try {
+    await social.toggleLike(trip.value)
+  } catch (err) {
+    console.error('Failed to toggle like:', err)
+  } finally {
+    likeBusy.value = false
+  }
+}
 
 onMounted(async () => loadTrip())
 
@@ -91,6 +108,29 @@ async function confirmDelete() {
         <div v-if="loading" class="mt-8 text-gray-500">Laden...</div>
         <div v-else-if="error" class="mt-8 text-red-500">{{ error }}</div>
         <div v-else-if="trip" class="mt-8">
+          <router-link
+            v-if="trip.authorUsername"
+            :to="{ name: 'profile-username', params: { username: trip.authorUsername } }"
+            class="mb-4 flex items-center gap-3"
+          >
+            <img
+              v-if="trip.authorAvatarUrl"
+              :src="trip.authorAvatarUrl"
+              :alt="trip.authorUsername"
+              class="h-10 w-10 rounded-full object-cover"
+            />
+            <div
+              v-else
+              class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-semibold text-blue-700"
+            >
+              {{ trip.authorUsername.charAt(0).toUpperCase() }}
+            </div>
+            <div>
+              <div class="font-semibold text-gray-900">@{{ trip.authorUsername }}</div>
+              <div v-if="trip.ownerName" class="text-xs text-gray-500">{{ trip.ownerName }}</div>
+            </div>
+          </router-link>
+
           <div class="flex items-start justify-between">
             <h1 class="text-3xl text-gray-900">{{ trip.title }}</h1>
             <div
@@ -163,6 +203,20 @@ async function confirmDelete() {
           </div>
 
           <div class="mt-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <button
+                :disabled="likeBusy"
+                class="flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                :class="likeState.likedByMe ? 'text-red-600' : 'text-gray-700 hover:text-red-600'"
+                @click="toggleLike"
+                :aria-pressed="likeState.likedByMe"
+                aria-label="Like"
+              >
+                <HeartIcon class="h-7 w-7" :class="likeState.likedByMe ? 'fill-red-600' : 'fill-none'" />
+                <span class="text-sm font-medium">{{ likeState.likeCount }}</span>
+              </button>
+              <span class="text-sm text-gray-500">{{ trip.commentCount }} Kommentare</span>
+            </div>
             <div v-if="trip.canEdit" class="flex items-center gap-2">
               <button
                 @click="goToEdit"
@@ -179,15 +233,15 @@ async function confirmDelete() {
                 <TrashIcon class="h-4 w-4" />
               </button>
             </div>
-            <p class="ml-auto text-right text-sm text-gray-500">{{ formatDateOnly(trip.date) }}</p>
           </div>
+          <p class="mt-2 ml-auto text-right text-sm text-gray-500">{{ formatDateOnly(trip.date) }}</p>
         </div>
 
         <div v-else class="mt-8">
           <h1 class="text-2xl text-gray-900">Reise nicht gefunden</h1>
         </div>
 
-        <TripComments v-if="trip" :tripId="route.params.id as string | string[]" />
+        <TripComments v-if="trip" :tripId="String(route.params.id)" />
 
         <!-- Delete Confirmation Dialog -->
         <div

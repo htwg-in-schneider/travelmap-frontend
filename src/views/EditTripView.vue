@@ -61,7 +61,10 @@ function handleMapClick(e: mapboxgl.MapMouseEvent) {
   if (marker.value) {
     marker.value.setLngLat([lngVal, latVal])
   } else {
-    marker.value = new mapboxgl.Marker({ color: '#2563eb' }).setLngLat([lngVal, latVal]).addTo(map.value as any)
+    marker.value = new mapboxgl.Marker({ color: '#2563eb' })
+      .setLngLat([lngVal, latVal])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .addTo(map.value as any)
   }
 
   reverseGeocode(lngVal, latVal)

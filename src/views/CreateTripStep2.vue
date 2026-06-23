@@ -59,6 +59,7 @@ function handleMapClick(e: mapboxgl.MapMouseEvent) {
   } else {
     marker.value = new mapboxgl.Marker({ color: '#2563eb' })
       .setLngLat([lng, lat])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .addTo(map.value as any)
   }
 

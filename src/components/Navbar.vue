@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { auth0 } from '@/auth0'
-import { HomeIcon, MapIcon, UserCircleIcon } from '@heroicons/vue/24/solid'
+import { HomeIcon, NewspaperIcon, UserCircleIcon } from '@heroicons/vue/24/solid'
 import { useUserRole } from '@/composables/useUserRole'
 import logo from '../../assets/travelmap-logo.svg'
 
@@ -36,20 +36,19 @@ function signOut() {
       <router-link
         :to="{ name: 'home' }"
         class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
-        aria-label="Feed"
-        title="Feed"
+        aria-label="Meine Reisen"
+        title="Meine Reisen"
       >
         <HomeIcon class="h-6 w-6" />
       </router-link>
       <router-link
-        :to="{ name: 'explore' }"
+        :to="{ name: 'feed' }"
         class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
-        aria-label="Entdecken"
-        title="Entdecken"
+        aria-label="Feed"
+        title="Feed"
       >
-        <MapIcon class="h-6 w-6" />
+        <NewspaperIcon class="h-6 w-6" />
       </router-link>
-
       <button
         v-if="!isLoading && !isAuthenticated"
         @click="login"

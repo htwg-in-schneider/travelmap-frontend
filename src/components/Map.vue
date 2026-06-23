@@ -48,7 +48,7 @@ function addTripMarkers() {
 
     if (trip.countryCode) {
       const flagEl = document.createElement('span')
-      flagEl.className = `fi fi-${trip.countryCode}`
+      flagEl.className = `fi fi-${trip.countryCode.toLowerCase()}`
       flagEl.style.width = '100%'
       flagEl.style.height = '100%'
       flagEl.style.backgroundSize = 'cover'

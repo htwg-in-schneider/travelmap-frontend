@@ -138,7 +138,7 @@ async function confirmDelete() {
               class="h-10 w-10 shrink-0 overflow-hidden rounded-lg shadow-sm"
             >
               <span
-                :class="'fi-' + trip.countryCode"
+                :class="'fi-' + trip.countryCode.toLowerCase()"
                 style="
                   display: block;
                   width: 100%;

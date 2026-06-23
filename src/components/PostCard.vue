@@ -3,7 +3,8 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { type Trip } from '@/data'
 import { useSocialStore } from '@/stores/social'
-import { HeartIcon, ChatBubbleLeftIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/solid'
+import { HeartIcon as HeartSolid, ChatBubbleLeftIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/solid'
+import { HeartIcon as HeartOutline } from '@heroicons/vue/24/outline'
 import placeholder from '../../assets/placeholder.png'
 
 const props = defineProps<{ trip: Trip }>()
@@ -113,7 +114,8 @@ function next() {
         :aria-pressed="likeState.likedByMe"
         aria-label="Like"
       >
-        <HeartIcon class="h-6 w-6" :class="likeState.likedByMe ? 'fill-red-600' : 'fill-none'" />
+        <HeartSolid v-if="likeState.likedByMe" class="h-6 w-6" />
+        <HeartOutline v-else class="h-6 w-6" />
         <span class="text-sm font-medium">{{ likeState.likeCount }}</span>
       </button>
       <button class="flex items-center gap-1.5 text-gray-700 hover:text-blue-600" @click="go" aria-label="Kommentare">

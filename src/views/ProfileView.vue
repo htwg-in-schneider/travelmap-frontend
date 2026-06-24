@@ -8,6 +8,7 @@ import {
   MagnifyingGlassIcon,
   PencilIcon,
   ArrowRightOnRectangleIcon,
+  ChevronDownIcon,
 } from '@heroicons/vue/24/solid'
 import {
   fetchMe,
@@ -31,6 +32,37 @@ import { auth0, AUTH_UNAVAILABLE_MESSAGE, loginWithRedirectSafe } from '@/auth0'
 import { useUserRole } from '@/composables/useUserRole'
 import { getContinentByCountryCode, type Continent } from '@/utils/continents'
 import { parseDateTime } from '@/utils/date'
+
+const COUNTRY_CODES = [
+  'AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AO', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AW', 'AX', 'AZ',
+  'BA', 'BB', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BL', 'BM', 'BN', 'BO', 'BQ', 'BR', 'BS',
+  'BT', 'BV', 'BW', 'BY', 'BZ', 'CA', 'CC', 'CD', 'CF', 'CG', 'CH', 'CI', 'CK', 'CL', 'CM', 'CN',
+  'CO', 'CR', 'CU', 'CV', 'CW', 'CX', 'CY', 'CZ', 'DE', 'DJ', 'DK', 'DM', 'DO', 'DZ', 'EC', 'EE',
+  'EG', 'EH', 'ER', 'ES', 'ET', 'FI', 'FJ', 'FK', 'FM', 'FO', 'FR', 'GA', 'GB', 'GD', 'GE', 'GF',
+  'GG', 'GH', 'GI', 'GL', 'GM', 'GN', 'GP', 'GQ', 'GR', 'GS', 'GT', 'GU', 'GW', 'GY', 'HK', 'HM',
+  'HN', 'HR', 'HT', 'HU', 'ID', 'IE', 'IL', 'IM', 'IN', 'IO', 'IQ', 'IR', 'IS', 'IT', 'JE', 'JM',
+  'JO', 'JP', 'KE', 'KG', 'KH', 'KI', 'KM', 'KN', 'KP', 'KR', 'KW', 'KY', 'KZ', 'LA', 'LB', 'LC',
+  'LI', 'LK', 'LR', 'LS', 'LT', 'LU', 'LV', 'LY', 'MA', 'MC', 'MD', 'ME', 'MF', 'MG', 'MH', 'MK',
+  'ML', 'MM', 'MN', 'MO', 'MP', 'MQ', 'MR', 'MS', 'MT', 'MU', 'MV', 'MW', 'MX', 'MY', 'MZ', 'NA',
+  'NC', 'NE', 'NF', 'NG', 'NI', 'NL', 'NO', 'NP', 'NR', 'NU', 'NZ', 'OM', 'PA', 'PE', 'PF', 'PG',
+  'PH', 'PK', 'PL', 'PM', 'PN', 'PR', 'PS', 'PT', 'PW', 'PY', 'QA', 'RE', 'RO', 'RS', 'RU', 'RW',
+  'SA', 'SB', 'SC', 'SD', 'SE', 'SG', 'SH', 'SI', 'SJ', 'SK', 'SL', 'SM', 'SN', 'SO', 'SR', 'SS',
+  'ST', 'SV', 'SX', 'SY', 'SZ', 'TC', 'TD', 'TF', 'TG', 'TH', 'TJ', 'TK', 'TL', 'TM', 'TN', 'TO',
+  'TR', 'TT', 'TV', 'TW', 'TZ', 'UA', 'UG', 'UM', 'US', 'UY', 'UZ', 'VA', 'VC', 'VE', 'VG', 'VI',
+  'VN', 'VU', 'WF', 'WS', 'YE', 'YT', 'ZA', 'ZM', 'ZW',
+] as const
+
+function buildCountryOptions(): string[] {
+  if (typeof Intl === 'undefined' || typeof Intl.DisplayNames === 'undefined') {
+    return []
+  }
+
+  const formatter = new Intl.DisplayNames(['en'], { type: 'region' })
+  return COUNTRY_CODES
+    .map((code) => formatter.of(code))
+    .filter((name): name is string => Boolean(name))
+    .sort((left, right) => left.localeCompare(right))
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -57,6 +89,11 @@ const street = ref('')
 const postalCode = ref('')
 const city = ref('')
 const country = ref('')
+const countryOptions = buildCountryOptions()
+const countrySelectOptions = computed(() => {
+  const current = country.value.trim()
+  return current && !countryOptions.includes(current) ? [current, ...countryOptions] : countryOptions
+})
 
 type OrderBy = 'newest' | 'oldest' | 'most-commented'
 
@@ -487,12 +524,21 @@ onUnmounted(() => {
 
             <div class="flex flex-col gap-1.5">
               <label class="text-sm font-medium text-gray-700" for="profile-country">Land</label>
-              <input
-                id="profile-country"
-                v-model="country"
-                type="text"
-                class="rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-600"
-              />
+              <div class="relative">
+                <select
+                  id="profile-country"
+                  v-model="country"
+                  class="w-full appearance-none rounded-xl border-2 border-gray-300 bg-white px-4 py-3 pr-12 text-gray-900 outline-none focus:border-blue-600"
+                >
+                  <option value="">Land auswählen</option>
+                  <option v-for="option in countrySelectOptions" :key="option" :value="option">
+                    {{ option }}
+                  </option>
+                </select>
+                <ChevronDownIcon
+                  class="pointer-events-none absolute top-1/2 right-4 h-5 w-5 -translate-y-1/2 text-gray-500"
+                />
+              </div>
             </div>
 
             <div v-if="saveError" class="text-sm text-red-500">{{ saveError }}</div>

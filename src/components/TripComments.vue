@@ -2,8 +2,8 @@
 import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { type Comment } from '@/data'
-import { fetchCommentsByTrip, createComment, deleteComment } from '@/services/api'
-import { auth0 } from '@/auth0'
+import { ApiError, fetchCommentsByTrip, createComment, deleteComment } from '@/services/api'
+import { auth0, AUTH_UNAVAILABLE_MESSAGE, loginWithRedirectSafe } from '@/auth0'
 import { PaperAirplaneIcon, UserIcon, TrashIcon } from '@heroicons/vue/24/solid'
 
 const { isAuthenticated } = auth0
@@ -22,6 +22,7 @@ const posting = ref(false)
 const postError = ref('')
 const deletingIds = ref<Set<number>>(new Set())
 const deleteError = ref('')
+const authError = ref('')
 
 function resolveTripId(): number {
   const raw = Array.isArray(props.tripId) ? props.tripId[0] : props.tripId
@@ -63,7 +64,13 @@ async function postComment() {
     await loadComments()
   } catch (err) {
     console.error('Error posting comment:', err)
-    postError.value = 'Fehler beim Posten des Kommentars.'
+    if (err instanceof ApiError && err.status === 401) {
+      postError.value = 'Bitte melde dich an, um zu kommentieren.'
+    } else if (err instanceof ApiError) {
+      postError.value = err.message
+    } else {
+      postError.value = 'Fehler beim Posten des Kommentars.'
+    }
   } finally {
     posting.value = false
   }
@@ -88,7 +95,15 @@ async function removeComment(comment: Comment) {
     comments.value = comments.value.filter((c) => c.id !== comment.id)
   } catch (err) {
     console.error('Error deleting comment:', err)
-    deleteError.value = 'Fehler beim Löschen des Kommentars.'
+    if (err instanceof ApiError && err.status === 403) {
+      deleteError.value = 'Du darfst diesen Kommentar nicht löschen.'
+    } else if (err instanceof ApiError && err.status === 401) {
+      deleteError.value = 'Bitte melde dich an, um Kommentare zu löschen.'
+    } else if (err instanceof ApiError) {
+      deleteError.value = err.message
+    } else {
+      deleteError.value = 'Fehler beim Löschen des Kommentars.'
+    }
   } finally {
     deletingIds.value.delete(comment.id)
   }
@@ -96,9 +111,11 @@ async function removeComment(comment: Comment) {
 
 async function login() {
   try {
-    await auth0.loginWithRedirect()
+    authError.value = ''
+    await loginWithRedirectSafe()
   } catch (err) {
     console.error('[TripComments] loginWithRedirect failed:', err)
+    authError.value = err instanceof Error ? err.message : AUTH_UNAVAILABLE_MESSAGE
   }
 }
 
@@ -141,6 +158,7 @@ watch(() => props.tripId, () => {
       </button>
       , um einen Kommentar zu schreiben.
     </div>
+    <div v-if="authError" class="mb-3 text-sm text-red-500">{{ authError }}</div>
 
     <div v-if="postError" class="mb-3 text-sm text-red-500">{{ postError }}</div>
     <div v-if="deleteError" class="mb-3 text-sm text-red-500">{{ deleteError }}</div>

@@ -3,9 +3,9 @@ import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { type Trip } from '@/data'
 import { ChevronLeftIcon, ChevronRightIcon, PencilIcon, TrashIcon, HeartIcon } from '@heroicons/vue/24/solid'
-import { fetchTripById, deleteTrip } from '@/services/api'
+import { ApiError, fetchTripById, deleteTrip } from '@/services/api'
 import { useSocialStore } from '@/stores/social'
-import { auth0 } from '@/auth0'
+import { auth0, AUTH_UNAVAILABLE_MESSAGE, loginWithRedirectSafe } from '@/auth0'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
 import TripComments from '@/components/TripComments.vue'
@@ -29,12 +29,19 @@ const images = computed(() => trip.value?.imageUrls ?? [])
 const currentImage = computed(() => images.value[currentImageIndex.value] ?? placeholder)
 
 const likeState = computed(() => (trip.value ? social.readLike(trip.value) : { likeCount: 0, likedByMe: false }))
+const actionMessage = computed(() => {
+  if (route.query.message === 'edit-forbidden') {
+    return 'Du darfst diese Reise nicht bearbeiten.'
+  }
+  return ''
+})
 
 async function login() {
   try {
-    await auth0.loginWithRedirect()
+    await loginWithRedirectSafe()
   } catch (err) {
     console.error('[TripDetail] loginWithRedirect failed:', err)
+    error.value = err instanceof Error ? err.message : AUTH_UNAVAILABLE_MESSAGE
   }
 }
 
@@ -49,6 +56,13 @@ async function toggleLike() {
     await social.toggleLike(trip.value)
   } catch (err) {
     console.error('Failed to toggle like:', err)
+    if (err instanceof ApiError && err.status === 401) {
+      error.value = 'Bitte melde dich an, um Reisen zu liken.'
+    } else if (err instanceof ApiError) {
+      error.value = err.message
+    } else {
+      error.value = 'Fehler beim Liken der Reise.'
+    }
   } finally {
     likeBusy.value = false
   }
@@ -108,6 +122,16 @@ async function confirmDelete() {
     router.push({ name: 'home' })
   } catch (err) {
     console.error('Error deleting trip:', err)
+    if (err instanceof ApiError && err.status === 403) {
+      error.value = 'Du darfst diese Reise nicht löschen.'
+    } else if (err instanceof ApiError && err.status === 401) {
+      error.value = 'Bitte melde dich an, um Reisen zu löschen.'
+    } else if (err instanceof ApiError) {
+      error.value = err.message
+    } else {
+      error.value = 'Fehler beim Löschen der Reise.'
+    }
+  } finally {
     deleting.value = false
   }
 }
@@ -119,6 +143,9 @@ async function confirmDelete() {
       <Navbar />
 
       <main class="flex-1">
+        <div v-if="actionMessage" class="mt-8 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          {{ actionMessage }}
+        </div>
         <div v-if="loading" class="mt-8 text-gray-500">Laden...</div>
         <div v-else-if="error" class="mt-8 text-red-500">{{ error }}</div>
         <div v-else-if="trip" class="mt-8">

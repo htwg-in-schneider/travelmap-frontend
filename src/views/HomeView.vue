@@ -11,15 +11,16 @@ import Map from '@/components/Map.vue'
 import { type Trip } from '@/data'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { fetchUserTrips, fetchExplore } from '@/services/api'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useUserRole } from '@/composables/useUserRole'
 import { getContinentByCountryCode, type Continent } from '@/utils/continents'
 import { parseDateTime } from '@/utils/date'
-import { auth0 } from '@/auth0'
+import { auth0, AUTH_UNAVAILABLE_MESSAGE, loginWithRedirectSafe } from '@/auth0'
 
 type OrderBy = 'newest' | 'oldest' | 'most-commented'
 
 const router = useRouter()
+const route = useRoute()
 const { username } = useUserRole()
 
 const trips = ref<Trip[]>([])
@@ -35,6 +36,7 @@ const searchDebounceMs = 250
 const guestTrips = ref<Trip[]>([])
 const guestLoading = ref(false)
 const guestError = ref('')
+const authError = ref('')
 
 let searchTimeout: ReturnType<typeof setTimeout> | null = null
 
@@ -165,9 +167,11 @@ function toggleSearch() {
 
 async function login() {
   try {
-    await auth0.loginWithRedirect()
+    authError.value = ''
+    await loginWithRedirectSafe()
   } catch (err) {
     console.error('[Home] loginWithRedirect failed:', err)
+    authError.value = err instanceof Error ? err.message : AUTH_UNAVAILABLE_MESSAGE
   }
 }
 </script>
@@ -183,6 +187,12 @@ async function login() {
         </h2>
 
         <template v-if="!auth0.isAuthenticated.value">
+          <div
+            v-if="route.query.message === 'auth-unavailable' || authError"
+            class="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+          >
+            {{ authError || AUTH_UNAVAILABLE_MESSAGE }}
+          </div>
           <div class="mb-6 flex items-center justify-between rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
             <p class="text-gray-600">Melde dich an, um deine eigenen Reisen zu teilen.</p>
             <button

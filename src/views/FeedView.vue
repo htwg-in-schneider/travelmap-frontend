@@ -5,7 +5,7 @@ import Footer from '@/components/Footer.vue'
 import PostCard from '@/components/PostCard.vue'
 import Map from '@/components/Map.vue'
 import { type Trip } from '@/data'
-import { fetchExplore } from '@/services/api'
+import { fetchFeed } from '@/services/api'
 import { useUserRole } from '@/composables/useUserRole'
 
 const trips = ref<Trip[]>([])
@@ -22,7 +22,7 @@ onMounted(async () => {
   loading.value = true
   error.value = ''
   try {
-    trips.value = await fetchExplore()
+    trips.value = await fetchFeed()
   } catch (err) {
     console.error('Error fetching feed:', err)
     error.value = 'Fehler beim Laden des Feeds.'
@@ -45,7 +45,7 @@ onMounted(async () => {
         <div v-if="loading" class="text-gray-500">Laden...</div>
         <div v-else-if="error" class="text-red-500">{{ error }}</div>
         <div v-else-if="feedTrips.length === 0" class="text-gray-500">
-          Keine Reisen von anderen Nutzern vorhanden.
+          Keine Reisen von Accounts vorhanden, denen du folgst.
         </div>
 
         <div class="flex flex-col gap-6 pb-8">

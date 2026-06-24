@@ -110,11 +110,7 @@ export async function updateTrip(id: number, payload: CreateTripPayload): Promis
 }
 
 export async function deleteTrip(id: number): Promise<void> {
-  const response = await fetch(`${BASE_URL}/${id}`, {
-    method: 'DELETE',
-    headers: await authHeaders(),
-  })
-  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+  return sendJson('DELETE', `${BASE_URL}/${id}`)
 }
 
 export async function requestImageUploadUrls(
@@ -149,7 +145,7 @@ export async function saveTripImages(
 // Feed (Instagram-style)
 // ---------------------------------------------------------------------------
 
-/** Feed of trips posted by the users I follow (falls back to all trips). */
+/** Feed of trips posted by the users I follow. */
 export async function fetchFeed(): Promise<Trip[]> {
   return getJson<Trip[]>(FEED_URL)
 }
@@ -340,9 +336,5 @@ export async function createComment(payload: CreateCommentPayload): Promise<Comm
 }
 
 export async function deleteComment(id: number): Promise<void> {
-  const response = await fetch(`${COMMENT_URL}/${id}`, {
-    method: 'DELETE',
-    headers: await authHeaders(),
-  })
-  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+  return sendJson('DELETE', `${COMMENT_URL}/${id}`)
 }

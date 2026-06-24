@@ -3,11 +3,17 @@ import { useRouter } from 'vue-router'
 import { ArrowLeftIcon, EyeIcon, LockClosedIcon } from '@heroicons/vue/24/solid'
 import { useCreateTripStore } from '@/stores/createTrip'
 import { computed, ref } from 'vue'
-import { TRIP_TEXT_MAX_LENGTH, TRIP_TITLE_MAX_LENGTH } from '@/utils/tripValidation'
+import {
+  TRIP_TEXT_MAX_LENGTH,
+  TRIP_TITLE_MAX_LENGTH,
+  type TripFieldErrors,
+} from '@/utils/tripValidation'
+import { firstError } from '@/utils/formValidation'
 
 const router = useRouter()
 const store = useCreateTripStore()
 const error = ref('')
+const fieldErrors = ref<TripFieldErrors>({})
 
 const canProceed = computed(() => store.title.trim().length > 0 && store.text.trim().length > 0)
 
@@ -18,20 +24,22 @@ function goBack() {
 function next() {
   const title = store.title.trim()
   const text = store.text.trim()
+  fieldErrors.value = {}
   if (!title) {
-    error.value = 'Titel ist ein Pflichtfeld.'
-    return
+    fieldErrors.value.title = 'Titel ist ein Pflichtfeld.'
   }
   if (title.length > TRIP_TITLE_MAX_LENGTH) {
-    error.value = `Titel darf maximal ${TRIP_TITLE_MAX_LENGTH} Zeichen lang sein.`
-    return
+    fieldErrors.value.title = `Titel darf maximal ${TRIP_TITLE_MAX_LENGTH} Zeichen lang sein.`
   }
   if (!text) {
-    error.value = 'Beschreibung ist ein Pflichtfeld.'
-    return
+    fieldErrors.value.text = 'Beschreibung ist ein Pflichtfeld.'
   }
   if (text.length > TRIP_TEXT_MAX_LENGTH) {
-    error.value = `Beschreibung darf maximal ${TRIP_TEXT_MAX_LENGTH} Zeichen lang sein.`
+    fieldErrors.value.text = `Beschreibung darf maximal ${TRIP_TEXT_MAX_LENGTH} Zeichen lang sein.`
+  }
+  const validationError = firstError(fieldErrors.value)
+  if (validationError) {
+    error.value = validationError
     return
   }
   error.value = ''
@@ -60,27 +68,39 @@ function next() {
             {{ error }}
           </div>
           <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-medium text-gray-700" for="title">Titel</label>
+            <label class="text-sm font-medium text-gray-700" for="title">Titel *</label>
             <input
               id="title"
               v-model="store.title"
               type="text"
+              required
               maxlength="120"
+              :aria-invalid="fieldErrors.title ? 'true' : 'false'"
+              aria-describedby="title-error"
               placeholder="z. B. Sommer in Japan"
               class="rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 transition-colors outline-none placeholder:text-gray-400 focus:border-blue-600"
             />
+            <p v-if="fieldErrors.title" id="title-error" class="text-sm text-red-500">
+              {{ fieldErrors.title }}
+            </p>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-medium text-gray-700" for="description">Beschreibung</label>
+            <label class="text-sm font-medium text-gray-700" for="description">Beschreibung *</label>
             <textarea
               id="description"
               v-model="store.text"
               placeholder="Was hast du erlebt?"
               rows="5"
+              required
               maxlength="10000"
+              :aria-invalid="fieldErrors.text ? 'true' : 'false'"
+              aria-describedby="description-error"
               class="resize-none rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 transition-colors outline-none placeholder:text-gray-400 focus:border-blue-600"
             />
+            <p v-if="fieldErrors.text" id="description-error" class="text-sm text-red-500">
+              {{ fieldErrors.text }}
+            </p>
           </div>
 
           <fieldset class="flex flex-col gap-2">

@@ -11,6 +11,7 @@ import {
   ChevronDownIcon,
 } from '@heroicons/vue/24/solid'
 import {
+  ApiError,
   fetchMe,
   updateMe,
   fetchUserProfile,
@@ -32,6 +33,13 @@ import { auth0, AUTH_UNAVAILABLE_MESSAGE, loginWithRedirectSafe } from '@/auth0'
 import { useUserRole } from '@/composables/useUserRole'
 import { getContinentByCountryCode, type Continent } from '@/utils/continents'
 import { parseDateTime } from '@/utils/date'
+import {
+  firstError,
+  PROFILE_FIELD_LIMITS,
+  validateProfileFields,
+  validationMessageFromApi,
+  type ProfileFieldErrors,
+} from '@/utils/formValidation'
 
 const COUNTRY_CODES = [
   'AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AO', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AW', 'AX', 'AZ',
@@ -89,6 +97,7 @@ const street = ref('')
 const postalCode = ref('')
 const city = ref('')
 const country = ref('')
+const fieldErrors = ref<ProfileFieldErrors>({})
 const countryOptions = buildCountryOptions()
 const countrySelectOptions = computed(() => {
   const current = country.value.trim()
@@ -244,12 +253,27 @@ function fillEditForm(data: MeResponse | null) {
   postalCode.value = data.postalCode ?? ''
   city.value = data.city ?? ''
   country.value = data.country ?? ''
+  fieldErrors.value = {}
 }
 
 async function submit() {
-  saving.value = true
   saveError.value = ''
   saved.value = false
+  fieldErrors.value = validateProfileFields({
+    displayName: displayName.value,
+    bio: bio.value,
+    street: street.value,
+    postalCode: postalCode.value,
+    city: city.value,
+    country: country.value,
+  })
+  const validationError = firstError(fieldErrors.value)
+  if (validationError) {
+    saveError.value = validationError
+    return
+  }
+
+  saving.value = true
   try {
     const updated = await updateMe({
       displayName: displayName.value.trim() || null,
@@ -271,7 +295,11 @@ async function submit() {
     saved.value = true
   } catch (err) {
     console.error('Error saving profile:', err)
-    saveError.value = 'Fehler beim Speichern. Bitte versuche es erneut.'
+    if (err instanceof ApiError) {
+      saveError.value = validationMessageFromApi(err.message)
+    } else {
+      saveError.value = 'Fehler beim Speichern. Bitte versuche es erneut.'
+    }
   } finally {
     saving.value = false
   }
@@ -447,6 +475,7 @@ onUnmounted(() => {
           <form
             v-if="profile.isMe && (editMode || isStaff)"
             class="mb-8 flex flex-col gap-5 rounded-2xl border-2 border-gray-200 bg-white p-6"
+            novalidate
             @submit.prevent="submit"
           >
             <div class="flex items-center gap-4">
@@ -470,13 +499,20 @@ onUnmounted(() => {
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-medium text-gray-700" for="profile-name">Name</label>
+              <label class="text-sm font-medium text-gray-700" for="profile-name">Name *</label>
               <input
                 id="profile-name"
                 v-model="displayName"
                 type="text"
+                required
+                :maxlength="PROFILE_FIELD_LIMITS.displayName"
+                :aria-invalid="fieldErrors.displayName ? 'true' : 'false'"
+                aria-describedby="profile-name-error"
                 class="rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-600"
               />
+              <p v-if="fieldErrors.displayName" id="profile-name-error" class="text-sm text-red-500">
+                {{ fieldErrors.displayName }}
+              </p>
             </div>
 
             <div class="flex flex-col gap-1.5">
@@ -485,8 +521,14 @@ onUnmounted(() => {
                 id="profile-bio"
                 v-model="bio"
                 rows="3"
+                :maxlength="PROFILE_FIELD_LIMITS.bio"
+                :aria-invalid="fieldErrors.bio ? 'true' : 'false'"
+                aria-describedby="profile-bio-error"
                 class="rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-600"
               />
+              <p v-if="fieldErrors.bio" id="profile-bio-error" class="text-sm text-red-500">
+                {{ fieldErrors.bio }}
+              </p>
             </div>
 
             <div class="flex flex-col gap-1.5">
@@ -495,8 +537,14 @@ onUnmounted(() => {
                 id="profile-street"
                 v-model="street"
                 type="text"
+                :maxlength="PROFILE_FIELD_LIMITS.street"
+                :aria-invalid="fieldErrors.street ? 'true' : 'false'"
+                aria-describedby="profile-street-error"
                 class="rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-600"
               />
+              <p v-if="fieldErrors.street" id="profile-street-error" class="text-sm text-red-500">
+                {{ fieldErrors.street }}
+              </p>
             </div>
 
             <div class="flex gap-4">
@@ -508,8 +556,18 @@ onUnmounted(() => {
                   id="profile-postal-code"
                   v-model="postalCode"
                   type="text"
+                  :maxlength="PROFILE_FIELD_LIMITS.postalCode"
+                  :aria-invalid="fieldErrors.postalCode ? 'true' : 'false'"
+                  aria-describedby="profile-postal-code-error"
                   class="rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-600"
                 />
+                <p
+                  v-if="fieldErrors.postalCode"
+                  id="profile-postal-code-error"
+                  class="text-sm text-red-500"
+                >
+                  {{ fieldErrors.postalCode }}
+                </p>
               </div>
               <div class="flex flex-2 flex-col gap-1.5">
                 <label class="text-sm font-medium text-gray-700" for="profile-city">Ort</label>
@@ -517,8 +575,14 @@ onUnmounted(() => {
                   id="profile-city"
                   v-model="city"
                   type="text"
+                  :maxlength="PROFILE_FIELD_LIMITS.city"
+                  :aria-invalid="fieldErrors.city ? 'true' : 'false'"
+                  aria-describedby="profile-city-error"
                   class="rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-600"
                 />
+                <p v-if="fieldErrors.city" id="profile-city-error" class="text-sm text-red-500">
+                  {{ fieldErrors.city }}
+                </p>
               </div>
             </div>
 
@@ -528,6 +592,8 @@ onUnmounted(() => {
                 <select
                   id="profile-country"
                   v-model="country"
+                  :aria-invalid="fieldErrors.country ? 'true' : 'false'"
+                  aria-describedby="profile-country-error"
                   class="w-full appearance-none rounded-xl border-2 border-gray-300 bg-white px-4 py-3 pr-12 text-gray-900 outline-none focus:border-blue-600"
                 >
                   <option value="">Land auswählen</option>
@@ -539,6 +605,9 @@ onUnmounted(() => {
                   class="pointer-events-none absolute top-1/2 right-4 h-5 w-5 -translate-y-1/2 text-gray-500"
                 />
               </div>
+              <p v-if="fieldErrors.country" id="profile-country-error" class="text-sm text-red-500">
+                {{ fieldErrors.country }}
+              </p>
             </div>
 
             <div v-if="saveError" class="text-sm text-red-500">{{ saveError }}</div>

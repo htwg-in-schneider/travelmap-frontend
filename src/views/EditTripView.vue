@@ -8,7 +8,13 @@ import { type Trip } from '@/data'
 import { ApiError, fetchTripById, updateTrip, type CreateTripPayload } from '@/services/api'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
-import { validateTripPayload } from '@/utils/tripValidation'
+import {
+  TRIP_TEXT_MAX_LENGTH,
+  TRIP_TITLE_MAX_LENGTH,
+  validateTripPayloadFields,
+  type TripFieldErrors,
+} from '@/utils/tripValidation'
+import { firstError } from '@/utils/formValidation'
 
 const route = useRoute()
 const router = useRouter()
@@ -27,6 +33,7 @@ const publicTrip = ref(true)
 
 const saving = ref(false)
 const saveError = ref('')
+const fieldErrors = ref<TripFieldErrors>({})
 
 const mapContainer = ref<HTMLDivElement | null>(null)
 const map = ref<mapboxgl.Map | null>(null)
@@ -149,8 +156,8 @@ onUnmounted(() => {
 
 async function submit() {
   if (!trip.value || !canSave.value) return
-  saving.value = true
   saveError.value = ''
+  fieldErrors.value = {}
   try {
     const payload: CreateTripPayload = {
       title: title.value.trim(),
@@ -161,11 +168,13 @@ async function submit() {
       longitude: lng.value,
       publicTrip: publicTrip.value,
     }
-    const validationError = validateTripPayload(payload)
+    fieldErrors.value = validateTripPayloadFields(payload)
+    const validationError = firstError(fieldErrors.value)
     if (validationError) {
       saveError.value = validationError
       return
     }
+    saving.value = true
     await updateTrip(trip.value.id, payload)
     router.push({ name: 'trip-detail', params: { id: trip.value.id.toString() } })
   } catch (err) {
@@ -209,14 +218,20 @@ async function submit() {
         <div v-else-if="trip" class="flex flex-col gap-8">
           <div class="flex flex-col gap-5">
             <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-medium text-gray-700" for="edit-title">Titel</label>
+              <label class="text-sm font-medium text-gray-700" for="edit-title">Titel *</label>
               <input
                 id="edit-title"
                 v-model="title"
                 type="text"
-                maxlength="120"
+                required
+                :maxlength="TRIP_TITLE_MAX_LENGTH"
+                :aria-invalid="fieldErrors.title ? 'true' : 'false'"
+                aria-describedby="edit-title-error"
                 class="rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 transition-colors outline-none placeholder:text-gray-400 focus:border-blue-600"
               />
+              <p v-if="fieldErrors.title" id="edit-title-error" class="text-sm text-red-500">
+                {{ fieldErrors.title }}
+              </p>
             </div>
 
             <div class="flex flex-col gap-1.5">
@@ -225,19 +240,34 @@ async function submit() {
                 id="edit-date"
                 v-model="date"
                 type="date"
+                :aria-invalid="fieldErrors.date ? 'true' : 'false'"
+                aria-describedby="edit-date-error"
                 class="rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 transition-colors outline-none placeholder:text-gray-400 focus:border-blue-600"
               />
+              <p v-if="fieldErrors.date" id="edit-date-error" class="text-sm text-red-500">
+                {{ fieldErrors.date }}
+              </p>
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-medium text-gray-700" for="edit-description">Beschreibung</label>
+              <label class="text-sm font-medium text-gray-700" for="edit-description">Beschreibung *</label>
               <textarea
                 id="edit-description"
                 v-model="text"
                 rows="5"
-                maxlength="10000"
+                required
+                :maxlength="TRIP_TEXT_MAX_LENGTH"
+                :aria-invalid="fieldErrors.text ? 'true' : 'false'"
+                aria-describedby="edit-description-error"
                 class="resize-none rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 transition-colors outline-none placeholder:text-gray-400 focus:border-blue-600"
               />
+              <p
+                v-if="fieldErrors.text"
+                id="edit-description-error"
+                class="text-sm text-red-500"
+              >
+                {{ fieldErrors.text }}
+              </p>
             </div>
 
             <fieldset class="flex flex-col gap-2">

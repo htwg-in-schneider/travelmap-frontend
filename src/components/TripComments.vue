@@ -6,6 +6,7 @@ import { ApiError, fetchCommentsByTrip, createComment, deleteComment } from '@/s
 import { auth0, AUTH_UNAVAILABLE_MESSAGE, loginWithRedirectSafe } from '@/auth0'
 import { PaperAirplaneIcon, UserIcon, TrashIcon } from '@heroicons/vue/24/solid'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { COMMENT_MAX_LENGTH } from '@/utils/formValidation'
 
 const { isAuthenticated } = auth0
 
@@ -25,6 +26,7 @@ const deletingIds = ref<Set<number>>(new Set())
 const deleteError = ref('')
 const authError = ref('')
 const commentPendingDelete = ref<Comment | null>(null)
+const commentFieldError = ref('')
 
 function resolveTripId(): number {
   const raw = Array.isArray(props.tripId) ? props.tripId[0] : props.tripId
@@ -53,10 +55,20 @@ async function loadComments() {
 
 async function postComment() {
   const text = newCommentText.value.trim()
-  if (!text) return
+  commentFieldError.value = ''
+  postError.value = ''
+  if (!text) {
+    commentFieldError.value = 'Kommentar ist ein Pflichtfeld.'
+    postError.value = commentFieldError.value
+    return
+  }
+  if (text.length > COMMENT_MAX_LENGTH) {
+    commentFieldError.value = `Kommentar darf maximal ${COMMENT_MAX_LENGTH} Zeichen lang sein.`
+    postError.value = commentFieldError.value
+    return
+  }
 
   posting.value = true
-  postError.value = ''
   try {
     await createComment({
       text,
@@ -138,14 +150,25 @@ watch(() => props.tripId, () => {
 
     <div v-if="isAuthenticated" class="mb-4 flex items-end gap-2">
       <div class="flex-1">
+        <label class="mb-1 block text-sm font-medium text-gray-700" for="comment-text">
+          Kommentar *
+        </label>
         <input
+          id="comment-text"
           v-model="newCommentText"
           type="text"
+          required
+          :maxlength="COMMENT_MAX_LENGTH"
           placeholder="Kommentar hinzufügen..."
+          :aria-invalid="commentFieldError ? 'true' : 'false'"
+          aria-describedby="comment-text-error"
           class="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600 focus:outline-none"
           :disabled="posting"
           @keydown="onKeydown"
         />
+        <p v-if="commentFieldError" id="comment-text-error" class="mt-1 text-sm text-red-500">
+          {{ commentFieldError }}
+        </p>
       </div>
       <button
         class="inline-flex items-center justify-center rounded-xl bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700 disabled:opacity-50"

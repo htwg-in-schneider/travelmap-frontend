@@ -17,6 +17,13 @@ import {
 import Button from '@/components/Button.vue'
 import OptionsMenu from '@/components/OptionsMenu.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import {
+  ADMIN_USER_LIMITS,
+  firstError,
+  validateAdminUserFields,
+  validationMessageFromApi,
+  type AdminUserFieldErrors,
+} from '@/utils/formValidation'
 
 const users = ref<AdminUser[]>([])
 const loading = ref(true)
@@ -29,9 +36,7 @@ const savingId = ref<number | null>(null)
 const deletingId = ref<number | null>(null)
 const userPendingDelete = ref<AdminUser | null>(null)
 const editForm = ref<Partial<AdminUser>>({})
-
-const USERNAME_PATTERN = /^[A-Za-z0-9_.-]+$/
-const EMAIL_PATTERN = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
+const fieldErrors = ref<AdminUserFieldErrors>({})
 
 const filteredUsers = computed(() => {
   const term = searchTerm.value.trim().toLowerCase()
@@ -88,38 +93,33 @@ function startEdit(user: AdminUser) {
   editingId.value = user.id
   saveMessage.value = ''
   saveError.value = ''
+  fieldErrors.value = {}
 }
 
 function cancelEdit() {
   editingId.value = null
   saveError.value = ''
+  fieldErrors.value = {}
 }
 
 async function saveEdit(user: AdminUser) {
   const displayName = editForm.value.displayName?.trim() ?? ''
-  if (!displayName) {
-    saveError.value = 'Name ist ein Pflichtfeld.'
-    return
-  }
-
   const username = editForm.value.username?.trim() ?? ''
-  if (!username) {
-    saveError.value = 'Username ist ein Pflichtfeld.'
-    return
-  }
-  if (username.length < 2 || username.length > 40) {
-    saveError.value = 'Username muss zwischen 2 und 40 Zeichen lang sein.'
-    return
-  }
-  if (!USERNAME_PATTERN.test(username)) {
-    saveError.value =
-      'Username darf nur Buchstaben, Zahlen, Punkte, Unterstriche und Bindestriche enthalten.'
-    return
-  }
-
   const email = editForm.value.email?.trim() ?? ''
-  if (email && !EMAIL_PATTERN.test(email)) {
-    saveError.value = 'E-Mail ist ungültig.'
+  fieldErrors.value = validateAdminUserFields({
+    displayName,
+    username,
+    email,
+    bio: editForm.value.bio ?? '',
+    street: editForm.value.street ?? '',
+    postalCode: editForm.value.postalCode ?? '',
+    city: editForm.value.city ?? '',
+    country: editForm.value.country ?? '',
+    role: editForm.value.role ?? 'user',
+  })
+  const validationError = firstError(fieldErrors.value)
+  if (validationError) {
+    saveError.value = validationError
     return
   }
 
@@ -157,7 +157,7 @@ async function saveEdit(user: AdminUser) {
       err.body !== null &&
       'error' in err.body
     ) {
-      message = String((err.body as { error: string }).error)
+      message = validationMessageFromApi(String((err.body as { error: string }).error))
     } else if (err instanceof ApiError && err.status === 403) {
       message = 'Keine Berechtigung.'
     }
@@ -311,8 +311,19 @@ onMounted(async () => {
                         :id="`edit-name-${user.id}`"
                         v-model="editForm.displayName"
                         type="text"
+                        required
+                        :maxlength="ADMIN_USER_LIMITS.displayName"
+                        :aria-invalid="fieldErrors.displayName ? 'true' : 'false'"
+                        :aria-describedby="`edit-name-${user.id}-error`"
                         class="rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                       />
+                      <p
+                        v-if="fieldErrors.displayName"
+                        :id="`edit-name-${user.id}-error`"
+                        class="text-sm text-red-500"
+                      >
+                        {{ fieldErrors.displayName }}
+                      </p>
                     </div>
                     <div class="flex flex-col gap-1.5">
                       <label class="text-sm font-medium text-gray-700" :for="`edit-username-${user.id}`"
@@ -322,8 +333,20 @@ onMounted(async () => {
                         :id="`edit-username-${user.id}`"
                         v-model="editForm.username"
                         type="text"
+                        required
+                        :minlength="ADMIN_USER_LIMITS.usernameMin"
+                        :maxlength="ADMIN_USER_LIMITS.usernameMax"
+                        :aria-invalid="fieldErrors.username ? 'true' : 'false'"
+                        :aria-describedby="`edit-username-${user.id}-error`"
                         class="rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                       />
+                      <p
+                        v-if="fieldErrors.username"
+                        :id="`edit-username-${user.id}-error`"
+                        class="text-sm text-red-500"
+                      >
+                        {{ fieldErrors.username }}
+                      </p>
                     </div>
                     <div class="flex flex-col gap-1.5">
                       <label class="text-sm font-medium text-gray-700" :for="`edit-email-${user.id}`"
@@ -333,8 +356,18 @@ onMounted(async () => {
                         :id="`edit-email-${user.id}`"
                         v-model="editForm.email"
                         type="email"
+                        :maxlength="ADMIN_USER_LIMITS.email"
+                        :aria-invalid="fieldErrors.email ? 'true' : 'false'"
+                        :aria-describedby="`edit-email-${user.id}-error`"
                         class="rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                       />
+                      <p
+                        v-if="fieldErrors.email"
+                        :id="`edit-email-${user.id}-error`"
+                        class="text-sm text-red-500"
+                      >
+                        {{ fieldErrors.email }}
+                      </p>
                     </div>
                     <div class="flex flex-col gap-1.5">
                       <label class="text-sm font-medium text-gray-700" :for="`edit-street-${user.id}`"
@@ -344,8 +377,18 @@ onMounted(async () => {
                         :id="`edit-street-${user.id}`"
                         v-model="editForm.street"
                         type="text"
+                        :maxlength="ADMIN_USER_LIMITS.street"
+                        :aria-invalid="fieldErrors.street ? 'true' : 'false'"
+                        :aria-describedby="`edit-street-${user.id}-error`"
                         class="rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                       />
+                      <p
+                        v-if="fieldErrors.street"
+                        :id="`edit-street-${user.id}-error`"
+                        class="text-sm text-red-500"
+                      >
+                        {{ fieldErrors.street }}
+                      </p>
                     </div>
                     <div class="flex flex-col gap-1.5">
                       <label class="text-sm font-medium text-gray-700" :for="`edit-postal-${user.id}`"
@@ -355,8 +398,18 @@ onMounted(async () => {
                         :id="`edit-postal-${user.id}`"
                         v-model="editForm.postalCode"
                         type="text"
+                        :maxlength="ADMIN_USER_LIMITS.postalCode"
+                        :aria-invalid="fieldErrors.postalCode ? 'true' : 'false'"
+                        :aria-describedby="`edit-postal-${user.id}-error`"
                         class="rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                       />
+                      <p
+                        v-if="fieldErrors.postalCode"
+                        :id="`edit-postal-${user.id}-error`"
+                        class="text-sm text-red-500"
+                      >
+                        {{ fieldErrors.postalCode }}
+                      </p>
                     </div>
                     <div class="flex flex-col gap-1.5">
                       <label class="text-sm font-medium text-gray-700" :for="`edit-city-${user.id}`"
@@ -366,8 +419,18 @@ onMounted(async () => {
                         :id="`edit-city-${user.id}`"
                         v-model="editForm.city"
                         type="text"
+                        :maxlength="ADMIN_USER_LIMITS.city"
+                        :aria-invalid="fieldErrors.city ? 'true' : 'false'"
+                        :aria-describedby="`edit-city-${user.id}-error`"
                         class="rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                       />
+                      <p
+                        v-if="fieldErrors.city"
+                        :id="`edit-city-${user.id}-error`"
+                        class="text-sm text-red-500"
+                      >
+                        {{ fieldErrors.city }}
+                      </p>
                     </div>
                     <div class="flex flex-col gap-1.5">
                       <label class="text-sm font-medium text-gray-700" :for="`edit-country-${user.id}`"
@@ -377,8 +440,18 @@ onMounted(async () => {
                         :id="`edit-country-${user.id}`"
                         v-model="editForm.country"
                         type="text"
+                        :maxlength="ADMIN_USER_LIMITS.country"
+                        :aria-invalid="fieldErrors.country ? 'true' : 'false'"
+                        :aria-describedby="`edit-country-${user.id}-error`"
                         class="rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                       />
+                      <p
+                        v-if="fieldErrors.country"
+                        :id="`edit-country-${user.id}-error`"
+                        class="text-sm text-red-500"
+                      >
+                        {{ fieldErrors.country }}
+                      </p>
                     </div>
                     <div class="flex flex-col gap-1.5 sm:col-span-2">
                       <label class="text-sm font-medium text-gray-700" :for="`edit-bio-${user.id}`"
@@ -388,8 +461,18 @@ onMounted(async () => {
                         :id="`edit-bio-${user.id}`"
                         v-model="editForm.bio"
                         rows="3"
+                        :maxlength="ADMIN_USER_LIMITS.bio"
+                        :aria-invalid="fieldErrors.bio ? 'true' : 'false'"
+                        :aria-describedby="`edit-bio-${user.id}-error`"
                         class="resize-none rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                       />
+                      <p
+                        v-if="fieldErrors.bio"
+                        :id="`edit-bio-${user.id}-error`"
+                        class="text-sm text-red-500"
+                      >
+                        {{ fieldErrors.bio }}
+                      </p>
                     </div>
                     <div class="flex flex-col gap-1.5">
                       <label class="text-sm font-medium text-gray-700" :for="`edit-role-${user.id}`"
@@ -398,6 +481,8 @@ onMounted(async () => {
                       <select
                         :id="`edit-role-${user.id}`"
                         v-model="editForm.role"
+                        :aria-invalid="fieldErrors.role ? 'true' : 'false'"
+                        :aria-describedby="`edit-role-${user.id}-error`"
                         class="rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                       >
                         <option value="user">User</option>
@@ -405,6 +490,13 @@ onMounted(async () => {
                         <option value="marketing">Marketing</option>
                         <option value="admin">Admin</option>
                       </select>
+                      <p
+                        v-if="fieldErrors.role"
+                        :id="`edit-role-${user.id}-error`"
+                        class="text-sm text-red-500"
+                      >
+                        {{ fieldErrors.role }}
+                      </p>
                     </div>
                   </div>
                   <div class="mt-4 flex justify-end gap-3">
@@ -474,8 +566,19 @@ onMounted(async () => {
                   :id="`mobile-edit-name-${user.id}`"
                   v-model="editForm.displayName"
                   type="text"
+                  required
+                  :maxlength="ADMIN_USER_LIMITS.displayName"
+                  :aria-invalid="fieldErrors.displayName ? 'true' : 'false'"
+                  :aria-describedby="`mobile-edit-name-${user.id}-error`"
                   class="rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                 />
+                <p
+                  v-if="fieldErrors.displayName"
+                  :id="`mobile-edit-name-${user.id}-error`"
+                  class="text-sm text-red-500"
+                >
+                  {{ fieldErrors.displayName }}
+                </p>
               </div>
               <div class="flex flex-col gap-1.5">
                 <label
@@ -487,8 +590,20 @@ onMounted(async () => {
                   :id="`mobile-edit-username-${user.id}`"
                   v-model="editForm.username"
                   type="text"
+                  required
+                  :minlength="ADMIN_USER_LIMITS.usernameMin"
+                  :maxlength="ADMIN_USER_LIMITS.usernameMax"
+                  :aria-invalid="fieldErrors.username ? 'true' : 'false'"
+                  :aria-describedby="`mobile-edit-username-${user.id}-error`"
                   class="rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                 />
+                <p
+                  v-if="fieldErrors.username"
+                  :id="`mobile-edit-username-${user.id}-error`"
+                  class="text-sm text-red-500"
+                >
+                  {{ fieldErrors.username }}
+                </p>
               </div>
               <div class="flex flex-col gap-1.5">
                 <label class="text-sm font-medium text-gray-700" :for="`mobile-edit-email-${user.id}`"
@@ -498,8 +613,18 @@ onMounted(async () => {
                   :id="`mobile-edit-email-${user.id}`"
                   v-model="editForm.email"
                   type="email"
+                  :maxlength="ADMIN_USER_LIMITS.email"
+                  :aria-invalid="fieldErrors.email ? 'true' : 'false'"
+                  :aria-describedby="`mobile-edit-email-${user.id}-error`"
                   class="rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                 />
+                <p
+                  v-if="fieldErrors.email"
+                  :id="`mobile-edit-email-${user.id}-error`"
+                  class="text-sm text-red-500"
+                >
+                  {{ fieldErrors.email }}
+                </p>
               </div>
               <div class="flex flex-col gap-1.5">
                 <label
@@ -511,8 +636,18 @@ onMounted(async () => {
                   :id="`mobile-edit-street-${user.id}`"
                   v-model="editForm.street"
                   type="text"
+                  :maxlength="ADMIN_USER_LIMITS.street"
+                  :aria-invalid="fieldErrors.street ? 'true' : 'false'"
+                  :aria-describedby="`mobile-edit-street-${user.id}-error`"
                   class="rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                 />
+                <p
+                  v-if="fieldErrors.street"
+                  :id="`mobile-edit-street-${user.id}-error`"
+                  class="text-sm text-red-500"
+                >
+                  {{ fieldErrors.street }}
+                </p>
               </div>
               <div class="grid grid-cols-2 gap-3">
                 <div class="flex flex-col gap-1.5">
@@ -525,8 +660,18 @@ onMounted(async () => {
                     :id="`mobile-edit-postal-${user.id}`"
                     v-model="editForm.postalCode"
                     type="text"
+                    :maxlength="ADMIN_USER_LIMITS.postalCode"
+                    :aria-invalid="fieldErrors.postalCode ? 'true' : 'false'"
+                    :aria-describedby="`mobile-edit-postal-${user.id}-error`"
                     class="rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                   />
+                  <p
+                    v-if="fieldErrors.postalCode"
+                    :id="`mobile-edit-postal-${user.id}-error`"
+                    class="text-sm text-red-500"
+                  >
+                    {{ fieldErrors.postalCode }}
+                  </p>
                 </div>
                 <div class="flex flex-col gap-1.5">
                   <label class="text-sm font-medium text-gray-700" :for="`mobile-edit-city-${user.id}`"
@@ -536,8 +681,18 @@ onMounted(async () => {
                     :id="`mobile-edit-city-${user.id}`"
                     v-model="editForm.city"
                     type="text"
+                    :maxlength="ADMIN_USER_LIMITS.city"
+                    :aria-invalid="fieldErrors.city ? 'true' : 'false'"
+                    :aria-describedby="`mobile-edit-city-${user.id}-error`"
                     class="rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                   />
+                  <p
+                    v-if="fieldErrors.city"
+                    :id="`mobile-edit-city-${user.id}-error`"
+                    class="text-sm text-red-500"
+                  >
+                    {{ fieldErrors.city }}
+                  </p>
                 </div>
               </div>
               <div class="flex flex-col gap-1.5">
@@ -550,8 +705,18 @@ onMounted(async () => {
                   :id="`mobile-edit-country-${user.id}`"
                   v-model="editForm.country"
                   type="text"
+                  :maxlength="ADMIN_USER_LIMITS.country"
+                  :aria-invalid="fieldErrors.country ? 'true' : 'false'"
+                  :aria-describedby="`mobile-edit-country-${user.id}-error`"
                   class="rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                 />
+                <p
+                  v-if="fieldErrors.country"
+                  :id="`mobile-edit-country-${user.id}-error`"
+                  class="text-sm text-red-500"
+                >
+                  {{ fieldErrors.country }}
+                </p>
               </div>
               <div class="flex flex-col gap-1.5">
                 <label class="text-sm font-medium text-gray-700" :for="`mobile-edit-bio-${user.id}`"
@@ -561,8 +726,18 @@ onMounted(async () => {
                   :id="`mobile-edit-bio-${user.id}`"
                   v-model="editForm.bio"
                   rows="3"
+                  :maxlength="ADMIN_USER_LIMITS.bio"
+                  :aria-invalid="fieldErrors.bio ? 'true' : 'false'"
+                  :aria-describedby="`mobile-edit-bio-${user.id}-error`"
                   class="resize-none rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                 />
+                <p
+                  v-if="fieldErrors.bio"
+                  :id="`mobile-edit-bio-${user.id}-error`"
+                  class="text-sm text-red-500"
+                >
+                  {{ fieldErrors.bio }}
+                </p>
               </div>
               <div class="flex flex-col gap-1.5">
                 <label class="text-sm font-medium text-gray-700" :for="`mobile-edit-role-${user.id}`"
@@ -571,6 +746,8 @@ onMounted(async () => {
                 <select
                   :id="`mobile-edit-role-${user.id}`"
                   v-model="editForm.role"
+                  :aria-invalid="fieldErrors.role ? 'true' : 'false'"
+                  :aria-describedby="`mobile-edit-role-${user.id}-error`"
                   class="rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                 >
                   <option value="user">User</option>
@@ -578,6 +755,13 @@ onMounted(async () => {
                   <option value="marketing">Marketing</option>
                   <option value="admin">Admin</option>
                 </select>
+                <p
+                  v-if="fieldErrors.role"
+                  :id="`mobile-edit-role-${user.id}-error`"
+                  class="text-sm text-red-500"
+                >
+                  {{ fieldErrors.role }}
+                </p>
               </div>
             </div>
             <div class="mt-4 flex justify-end gap-3">

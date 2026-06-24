@@ -9,16 +9,8 @@ import {
 import { useUserRole } from '@/composables/useUserRole'
 import logo from '../../assets/travelmap-logo.svg'
 
-const { isAuthenticated, isLoading, user } = auth0
+const { isAuthenticated, user } = auth0
 const { isAdmin, username } = useUserRole()
-
-async function login() {
-  try {
-    await auth0.loginWithRedirect()
-  } catch (err) {
-    console.error('[Navbar] loginWithRedirect failed:', err)
-  }
-}
 </script>
 
 <template>
@@ -32,32 +24,25 @@ async function login() {
       <img :src="logo" alt="Travelmap Logo" class="h-8 w-auto" />
       <span class="text-xl text-gray-900">Travelmap</span>
     </router-link>
-    <div class="flex items-center gap-4">
-      <router-link
-        v-if="!isAdmin"
-        :to="{ name: 'home' }"
-        class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
-        aria-label="Meine Reisen"
-        title="Meine Reisen"
-      >
-        <HomeIcon class="h-6 w-6" />
-      </router-link>
-      <router-link
-        v-if="!isAdmin"
-        :to="{ name: 'feed' }"
-        class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
-        aria-label="Feed"
-        title="Feed"
-      >
-        <NewspaperIcon class="h-6 w-6" />
-      </router-link>
-      <button
-        v-if="!isLoading && !isAuthenticated"
-        @click="login"
-        class="rounded-xl bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-blue-700"
-      >
-        Anmelden
-      </button>
+    <div v-if="isAuthenticated" class="flex items-center gap-4">
+      <template v-if="isAuthenticated && !isAdmin">
+        <router-link
+          :to="{ name: 'home' }"
+          class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+          aria-label="Meine Reisen"
+          title="Meine Reisen"
+        >
+          <HomeIcon class="h-6 w-6" />
+        </router-link>
+        <router-link
+          :to="{ name: 'feed' }"
+          class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+          aria-label="Feed"
+          title="Feed"
+        >
+          <NewspaperIcon class="h-6 w-6" />
+        </router-link>
+      </template>
 
       <template v-else-if="isAuthenticated">
         <router-link

@@ -4,12 +4,13 @@ import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
 import Button from '@/components/Button.vue'
 import TravelCard from '@/components/TravelCard.vue'
+import PostCard from '@/components/PostCard.vue'
 import TripFilter from '@/components/TripFilter.vue'
 import TripSearch from '@/components/TripSearch.vue'
 import Map from '@/components/Map.vue'
 import { type Trip } from '@/data'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { fetchUserTrips } from '@/services/api'
+import { fetchUserTrips, fetchExplore } from '@/services/api'
 import { useRouter } from 'vue-router'
 import { useUserRole } from '@/composables/useUserRole'
 import { getContinentByCountryCode, type Continent } from '@/utils/continents'
@@ -30,6 +31,10 @@ const searchTerm = ref('')
 const selectedContinent = ref<Continent | ''>('')
 const orderBy = ref<OrderBy>('newest')
 const searchDebounceMs = 250
+
+const guestTrips = ref<Trip[]>([])
+const guestLoading = ref(false)
+const guestError = ref('')
 
 let searchTimeout: ReturnType<typeof setTimeout> | null = null
 
@@ -70,7 +75,11 @@ const visibleTrips = computed(() => {
 })
 
 onMounted(async () => {
-  await loadTrips()
+  if (auth0.isAuthenticated.value) {
+    await loadTrips()
+  } else {
+    await loadGuestFeed()
+  }
 })
 
 onUnmounted(() => {
@@ -89,8 +98,12 @@ watch(username, (newUsername) => {
 watch(
   () => auth0.isAuthenticated.value,
   (isAuth) => {
-    if (!isAuth) {
+    if (isAuth) {
+      guestTrips.value = []
+      loadTrips()
+    } else {
       trips.value = []
+      loadGuestFeed()
     }
   },
 )
@@ -109,6 +122,19 @@ async function loadTrips() {
     error.value = 'Fehler beim Laden der Reisen.'
   } finally {
     loading.value = false
+  }
+}
+
+async function loadGuestFeed() {
+  guestLoading.value = true
+  guestError.value = ''
+  try {
+    guestTrips.value = await fetchExplore()
+  } catch (err) {
+    console.error('Error fetching guest feed:', err)
+    guestError.value = 'Fehler beim Laden des Feeds.'
+  } finally {
+    guestLoading.value = false
   }
 }
 
@@ -136,6 +162,14 @@ function toggleFilter() {
 function toggleSearch() {
   showSearch.value = !showSearch.value
 }
+
+async function login() {
+  try {
+    await auth0.loginWithRedirect()
+  } catch (err) {
+    console.error('[Home] loginWithRedirect failed:', err)
+  }
+}
 </script>
 
 <template>
@@ -144,12 +178,32 @@ function toggleSearch() {
       <Navbar />
 
       <main class="flex-1">
-        <h2 class="mt-8 mb-6 text-2xl text-gray-900">Meine Reisen</h2>
+        <h2 class="mt-8 mb-6 text-2xl text-gray-900">
+          {{ auth0.isAuthenticated.value ? 'Meine Reisen' : 'Entdecken' }}
+        </h2>
 
         <template v-if="!auth0.isAuthenticated.value">
-          <p class="mb-8 text-gray-600">
-            Melde dich an, um deine eigenen Reisen zu sehen.
-          </p>
+          <div class="mb-6 flex items-center justify-between rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <p class="text-gray-600">Melde dich an, um deine eigenen Reisen zu teilen.</p>
+            <button
+              class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+              @click="login"
+            >
+              Anmelden
+            </button>
+          </div>
+
+          <Map :trips="guestTrips" class="my-6 h-128 w-full rounded-lg" />
+
+          <div v-if="guestLoading" class="text-gray-500">Laden...</div>
+          <div v-else-if="guestError" class="text-red-500">{{ guestError }}</div>
+          <div v-else-if="guestTrips.length === 0" class="text-gray-500">
+            Noch keine Reisen vorhanden.
+          </div>
+
+          <div class="flex flex-col gap-6 pb-8">
+            <PostCard v-for="trip in guestTrips" :key="trip.id" :trip="trip" />
+          </div>
         </template>
 
         <template v-else>

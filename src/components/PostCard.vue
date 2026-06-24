@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { type Trip } from '@/data'
 import { useSocialStore } from '@/stores/social'
+import { auth0 } from '@/auth0'
 import { HeartIcon as HeartSolid, ChatBubbleLeftIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/solid'
 import { HeartIcon as HeartOutline } from '@heroicons/vue/24/outline'
 import placeholder from '../../assets/placeholder.png'
@@ -10,6 +11,7 @@ import placeholder from '../../assets/placeholder.png'
 const props = defineProps<{ trip: Trip }>()
 const router = useRouter()
 const social = useSocialStore()
+const { isAuthenticated } = auth0
 
 const images = computed(() => props.trip.imageUrls ?? [])
 const currentIndex = ref(0)
@@ -26,7 +28,19 @@ function goProfile() {
   if (props.trip.authorUsername) router.push({ name: 'profile-username', params: { username: props.trip.authorUsername } })
 }
 
+async function login() {
+  try {
+    await auth0.loginWithRedirect()
+  } catch (err) {
+    console.error('[PostCard] loginWithRedirect failed:', err)
+  }
+}
+
 async function toggleLike() {
+  if (!isAuthenticated.value) {
+    await login()
+    return
+  }
   if (likeBusy.value) return
   likeBusy.value = true
   try {
@@ -36,6 +50,14 @@ async function toggleLike() {
   } finally {
     likeBusy.value = false
   }
+}
+
+function openComments() {
+  if (!isAuthenticated.value) {
+    login()
+    return
+  }
+  go()
 }
 
 function prev() {
@@ -109,7 +131,14 @@ function next() {
       <button
         :disabled="likeBusy"
         class="flex items-center gap-1.5 transition-colors disabled:opacity-50"
-        :class="likeState.likedByMe ? 'text-red-600' : 'text-gray-700 hover:text-red-600'"
+        :class="[
+          isAuthenticated
+            ? likeState.likedByMe
+              ? 'text-red-600'
+              : 'text-gray-700 hover:text-red-600'
+            : 'text-gray-400 hover:text-gray-500',
+        ]"
+        :title="isAuthenticated ? undefined : 'Anmelden, um zu liken'"
         @click="toggleLike"
         :aria-pressed="likeState.likedByMe"
         aria-label="Like"
@@ -118,7 +147,13 @@ function next() {
         <HeartOutline v-else class="h-6 w-6" />
         <span class="text-sm font-medium">{{ likeState.likeCount }}</span>
       </button>
-      <button class="flex items-center gap-1.5 text-gray-700 hover:text-blue-600" @click="go" aria-label="Kommentare">
+      <button
+        class="flex items-center gap-1.5"
+        :class="isAuthenticated ? 'text-gray-700 hover:text-blue-600' : 'text-gray-400 hover:text-gray-500'"
+        :title="isAuthenticated ? undefined : 'Anmelden, um zu kommentieren'"
+        @click="openComments"
+        aria-label="Kommentare"
+      >
         <ChatBubbleLeftIcon class="h-6 w-6" />
         <span class="text-sm font-medium">{{ trip.commentCount }}</span>
       </button>

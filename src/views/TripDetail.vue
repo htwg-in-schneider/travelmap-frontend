@@ -5,6 +5,7 @@ import { type Trip } from '@/data'
 import { ChevronLeftIcon, ChevronRightIcon, PencilIcon, TrashIcon, HeartIcon } from '@heroicons/vue/24/solid'
 import { fetchTripById, deleteTrip } from '@/services/api'
 import { useSocialStore } from '@/stores/social'
+import { auth0 } from '@/auth0'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
 import TripComments from '@/components/TripComments.vue'
@@ -14,6 +15,7 @@ import { formatDateOnly } from '@/utils/date'
 const route = useRoute()
 const router = useRouter()
 const social = useSocialStore()
+const { isAuthenticated } = auth0
 const trip = ref<Trip | null>(null)
 const loading = ref(true)
 const error = ref('')
@@ -28,7 +30,19 @@ const currentImage = computed(() => images.value[currentImageIndex.value] ?? pla
 
 const likeState = computed(() => (trip.value ? social.readLike(trip.value) : { likeCount: 0, likedByMe: false }))
 
+async function login() {
+  try {
+    await auth0.loginWithRedirect()
+  } catch (err) {
+    console.error('[TripDetail] loginWithRedirect failed:', err)
+  }
+}
+
 async function toggleLike() {
+  if (!isAuthenticated.value) {
+    await login()
+    return
+  }
   if (!trip.value || likeBusy.value) return
   likeBusy.value = true
   try {
@@ -207,7 +221,14 @@ async function confirmDelete() {
               <button
                 :disabled="likeBusy"
                 class="flex items-center gap-1.5 transition-colors disabled:opacity-50"
-                :class="likeState.likedByMe ? 'text-red-600' : 'text-gray-700 hover:text-red-600'"
+                :class="[
+                  isAuthenticated
+                    ? likeState.likedByMe
+                      ? 'text-red-600'
+                      : 'text-gray-700 hover:text-red-600'
+                    : 'text-gray-400 hover:text-gray-500',
+                ]"
+                :title="isAuthenticated ? undefined : 'Anmelden, um zu liken'"
                 @click="toggleLike"
                 :aria-pressed="likeState.likedByMe"
                 aria-label="Like"

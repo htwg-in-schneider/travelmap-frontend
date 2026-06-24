@@ -25,7 +25,7 @@ const { isAdmin, username } = useUserRole()
       <span class="text-xl text-gray-900">Travelmap</span>
     </router-link>
     <div v-if="isAuthenticated" class="flex items-center gap-4">
-      <template v-if="isAuthenticated && !isAdmin">
+      <template v-if="!isAdmin">
         <router-link
           :to="{ name: 'home' }"
           class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
@@ -43,33 +43,29 @@ const { isAdmin, username } = useUserRole()
           <NewspaperIcon class="h-6 w-6" />
         </router-link>
       </template>
-
-      <template v-else-if="isAuthenticated">
-        <router-link
-          v-if="isAdmin"
-          :to="{ name: 'admin-users' }"
-          class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
-          aria-label="Benutzerverwaltung"
-          title="Benutzerverwaltung"
-        >
-          <UsersIcon class="h-6 w-6" />
-        </router-link>
-        <router-link
-          v-if="username"
-          :to="{ name: 'profile-username', params: { username } }"
-          class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
-          aria-label="Mein Profil"
-          title="Mein Profil"
-        >
-          <img
-            v-if="user?.picture"
-            :src="user.picture"
-            :alt="user?.name ?? 'Profilbild'"
-            class="h-8 w-8 rounded-full"
-          />
-          <UserCircleIcon v-else class="h-7 w-7 text-gray-800" />
-        </router-link>
-      </template>
+      <router-link
+        v-else
+        :to="{ name: 'admin-users' }"
+        class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+        aria-label="Benutzerverwaltung"
+        title="Benutzerverwaltung"
+      >
+        <UsersIcon class="h-6 w-6" />
+      </router-link>
+      <router-link
+        :to="username ? { name: 'profile-username', params: { username } } : { name: 'profile' }"
+        class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+        aria-label="Mein Profil"
+        title="Mein Profil"
+      >
+        <img
+          v-if="user?.picture"
+          :src="user.picture"
+          :alt="user?.name ?? 'Profilbild'"
+          class="h-8 w-8 rounded-full"
+        />
+        <UserCircleIcon v-else class="h-7 w-7 text-gray-800" />
+      </router-link>
     </div>
   </nav>
 </template>

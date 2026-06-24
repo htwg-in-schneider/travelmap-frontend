@@ -79,6 +79,12 @@ const router = createRouter({
       component: ProfileView,
     },
     {
+      path: '/profile',
+      name: 'profile',
+      component: ProfileView,
+      beforeEnter: authGuard,
+    },
+    {
       path: '/trip/:id',
       name: 'trip-detail',
       component: TripDetail,

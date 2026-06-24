@@ -56,6 +56,24 @@ function formatAddress(user: AdminUser): string {
 const USERNAME_PATTERN = /^[A-Za-z0-9_.-]+$/
 const EMAIL_PATTERN = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
 
+function roleBadgeClass(user: AdminUser): string {
+  switch (user.role) {
+    case 'admin': return 'bg-blue-100 text-blue-700'
+    case 'support': return 'bg-amber-100 text-amber-700'
+    case 'marketing': return 'bg-green-100 text-green-700'
+    default: return 'bg-gray-100 text-gray-600'
+  }
+}
+
+function roleLabel(user: AdminUser): string {
+  switch (user.role) {
+    case 'admin': return 'Admin'
+    case 'support': return 'Support'
+    case 'marketing': return 'Marketing'
+    default: return 'User'
+  }
+}
+
 function startEdit(user: AdminUser) {
   editForm.value = {
     username: user.username,
@@ -66,6 +84,7 @@ function startEdit(user: AdminUser) {
     postalCode: user.postalCode ?? '',
     city: user.city ?? '',
     country: user.country ?? '',
+    role: user.role ?? 'user',
   }
   editingId.value = user.id
   saveMessage.value = ''
@@ -119,6 +138,7 @@ async function saveEdit(user: AdminUser) {
       postalCode: editForm.value.postalCode?.trim() || null,
       city: editForm.value.city?.trim() || null,
       country: editForm.value.country?.trim() || null,
+      role: editForm.value.role ?? 'user',
     })
     const index = users.value.findIndex((u) => u.id === user.id)
     if (index !== -1) {
@@ -260,13 +280,8 @@ onMounted(async () => {
                     </td>
                     <td class="px-4 py-3 text-gray-600">{{ formatAddress(user) }}</td>
                     <td class="px-4 py-3">
-                      <span
-                        :class="[
-                          'rounded-full px-2 py-0.5 text-xs font-medium',
-                          user.admin ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600',
-                        ]"
-                      >
-                        {{ user.admin ? 'Admin' : 'User' }}
+                      <span :class="['rounded-full px-2 py-0.5 text-xs font-medium', roleBadgeClass(user)]">
+                        {{ roleLabel(user) }}
                       </span>
                     </td>
                     <td class="px-4 py-3 text-right">
@@ -397,6 +412,19 @@ onMounted(async () => {
                             class="resize-none rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
                           />
                         </div>
+                        <div class="flex flex-col gap-1.5">
+                          <label class="text-sm font-medium text-gray-700" :for="`edit-role-${user.id}`">Rolle</label>
+                          <select
+                            :id="`edit-role-${user.id}`"
+                            v-model="editForm.role"
+                            class="rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-600"
+                          >
+                            <option value="user">User</option>
+                            <option value="support">Support</option>
+                            <option value="marketing">Marketing</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                        </div>
                       </div>
                       <div class="mt-4 flex justify-end gap-3">
                         <Button variant="secondary" @click="cancelEdit">
@@ -430,13 +458,8 @@ onMounted(async () => {
                   <div class="text-xs text-gray-500">@{{ user.username }}</div>
                   <div v-if="user.email" class="text-xs text-gray-500">{{ user.email }}</div>
                 </div>
-                <span
-                  :class="[
-                    'rounded-full px-2 py-0.5 text-xs font-medium',
-                    user.admin ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600',
-                  ]"
-                >
-                  {{ user.admin ? 'Admin' : 'User' }}
+                <span :class="['rounded-full px-2 py-0.5 text-xs font-medium', roleBadgeClass(user)]">
+                  {{ roleLabel(user) }}
                 </span>
               </div>
               <div class="mb-3 text-sm text-gray-600">{{ formatAddress(user) }}</div>

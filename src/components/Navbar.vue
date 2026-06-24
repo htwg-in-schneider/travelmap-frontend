@@ -6,6 +6,10 @@ import {
   NewspaperIcon,
   UserCircleIcon,
   UsersIcon,
+  ShieldCheckIcon,
+  ChartBarIcon,
+  PencilIcon,
+  ArrowRightOnRectangleIcon,
 } from '@heroicons/vue/24/solid'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -15,7 +19,20 @@ import { searchUsers } from '@/services/api'
 import logo from '../../assets/travelmap-logo.svg'
 
 const { isAuthenticated, user } = auth0
-const { isAdmin, username } = useUserRole()
+const { isAdmin, isSupport, isMarketing, username } = useUserRole()
+const showProfileMenu = ref(false)
+
+function homeRoute() {
+  if (isAdmin.value) return { name: 'admin-users' }
+  if (isSupport.value) return { name: 'support' }
+  if (isMarketing.value) return { name: 'marketing' }
+  return { name: 'home' }
+}
+
+function signOut() {
+  auth0.logout({ logoutParams: { returnTo: window.location.origin + import.meta.env.BASE_URL } })
+}
+
 const router = useRouter()
 const route = useRoute()
 
@@ -34,10 +51,10 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null
 let activeRequestId = 0
 
 const trimmedQuery = computed(() => query.value.trim())
+const isStaff = computed(() => isAdmin.value || isSupport.value || isMarketing.value)
 
 watch(trimmedQuery, (nextQuery) => {
   if (!searchExpanded.value) return
-
   queueSearch(nextQuery)
 })
 
@@ -45,6 +62,7 @@ watch(
   () => route.fullPath,
   () => {
     resetSearch()
+    showProfileMenu.value = false
   },
 )
 
@@ -66,7 +84,6 @@ function clearPendingSearch() {
 
 function queueSearch(searchTerm: string) {
   clearPendingSearch()
-
   open.value = true
   loading.value = true
   error.value = ''
@@ -161,16 +178,13 @@ async function goToProfile(userSummary: UserSummary) {
     class="fixed top-0 right-0 left-0 z-50 bg-gray-50/90 px-4 py-4 backdrop-blur-sm sm:px-6"
   >
     <div class="mx-auto flex w-full max-w-6xl items-center gap-3">
-      <router-link
-        :to="isAdmin ? { name: 'admin-users' } : { name: 'home' }"
-        class="flex shrink-0 items-center gap-2"
-      >
+      <router-link :to="homeRoute()" class="flex shrink-0 items-center gap-2">
         <img :src="logo" alt="Travelmap Logo" class="h-8 w-auto" />
         <span class="text-xl text-gray-900">Travelmap</span>
       </router-link>
 
       <div v-if="isAuthenticated" class="ml-auto flex shrink-0 items-center gap-4">
-        <template v-if="!isAdmin">
+        <template v-if="!isStaff">
           <router-link
             :to="{ name: 'home' }"
             class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
@@ -257,8 +271,9 @@ async function goToProfile(userSummary: UserSummary) {
             </div>
           </div>
         </template>
+
         <router-link
-          v-else
+          v-if="isAdmin"
           :to="{ name: 'admin-users' }"
           class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
           aria-label="Benutzerverwaltung"
@@ -267,6 +282,66 @@ async function goToProfile(userSummary: UserSummary) {
           <UsersIcon class="h-6 w-6" />
         </router-link>
         <router-link
+          v-if="isSupport"
+          :to="{ name: 'support' }"
+          class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+          aria-label="Support – Moderation"
+          title="Moderation"
+        >
+          <ShieldCheckIcon class="h-6 w-6" />
+        </router-link>
+        <router-link
+          v-if="isMarketing"
+          :to="{ name: 'marketing' }"
+          class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+          aria-label="Marketing – Statistiken"
+          title="Statistiken"
+        >
+          <ChartBarIcon class="h-6 w-6" />
+        </router-link>
+
+        <div v-if="isStaff" class="relative">
+          <button
+            class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+            aria-label="Mein Profil"
+            title="Mein Profil"
+            @click="showProfileMenu = !showProfileMenu"
+          >
+            <img
+              v-if="user?.picture"
+              :src="user.picture"
+              :alt="user?.name ?? 'Profilbild'"
+              class="h-8 w-8 rounded-full"
+            />
+            <UserCircleIcon v-else class="h-7 w-7 text-gray-800" />
+          </button>
+
+          <div v-if="showProfileMenu" class="fixed inset-0 z-40" @click="showProfileMenu = false" />
+
+          <div
+            v-if="showProfileMenu"
+            class="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-gray-200 bg-white py-1 shadow-lg"
+          >
+            <router-link
+              :to="{ name: 'profile' }"
+              class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100"
+              @click="showProfileMenu = false"
+            >
+              <PencilIcon class="h-4 w-4" />
+              Profil bearbeiten
+            </router-link>
+            <button
+              class="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-gray-100"
+              @click="signOut"
+            >
+              <ArrowRightOnRectangleIcon class="h-4 w-4" />
+              Abmelden
+            </button>
+          </div>
+        </div>
+
+        <router-link
+          v-else
           :to="username ? { name: 'profile-username', params: { username } } : { name: 'profile' }"
           class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
           aria-label="Mein Profil"

@@ -2,6 +2,7 @@ import { watch } from 'vue'
 import { createRouter, createWebHistory, type NavigationGuard, type RouteLocationNormalized } from 'vue-router'
 import { auth0, isAuthConfigured, loginWithRedirectSafe } from '@/auth0'
 import { fetchMe } from '@/services/api'
+import { syncProfileFrom } from '@/composables/useUserRole'
 import HomeView from '@/views/HomeView.vue'
 import FeedView from '@/views/FeedView.vue'
 import TripDetail from '@/views/TripDetail.vue'
@@ -11,6 +12,8 @@ import CreateTripStep2 from '@/views/CreateTripStep2.vue'
 import EditTripView from '@/views/EditTripView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import AdminUsersView from '@/views/AdminUsersView.vue'
+import SupportView from '@/views/SupportView.vue'
+import MarketingView from '@/views/MarketingView.vue'
 import ImpressumView from '@/views/ImpressumView.vue'
 import DatenschutzView from '@/views/DatenschutzView.vue'
 import KontaktView from '@/views/KontaktView.vue'
@@ -50,9 +53,36 @@ const adminGuard: NavigationGuard = async (to) => {
     const me = await fetchMe()
     if (me.admin) {
       return true
-    } else {
-      return { name: 'home' }
     }
+    return { name: 'home' }
+  } catch {
+    return { name: 'home' }
+  }
+}
+
+const supportGuard: NavigationGuard = async (to) => {
+  const authResult = await ensureAuthenticated(to)
+  if (authResult !== true) return authResult
+  try {
+    const me = await fetchMe()
+    if (me.role === 'support' || me.admin) {
+      return true
+    }
+    return { name: 'home' }
+  } catch {
+    return { name: 'home' }
+  }
+}
+
+const marketingGuard: NavigationGuard = async (to) => {
+  const authResult = await ensureAuthenticated(to)
+  if (authResult !== true) return authResult
+  try {
+    const me = await fetchMe()
+    if (me.role === 'marketing' || me.admin) {
+      return true
+    }
+    return { name: 'home' }
   } catch {
     return { name: 'home' }
   }
@@ -130,6 +160,18 @@ const router = createRouter({
       beforeEnter: adminGuard,
     },
     {
+      path: '/support',
+      name: 'support',
+      component: SupportView,
+      beforeEnter: supportGuard,
+    },
+    {
+      path: '/marketing',
+      name: 'marketing',
+      component: MarketingView,
+      beforeEnter: marketingGuard,
+    },
+    {
       path: '/impressum',
       name: 'impressum',
       component: ImpressumView,
@@ -150,11 +192,15 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   await waitForAuthReady()
   if (!auth0.isAuthenticated.value) return true
-  if (to.name === 'admin-users') return true
+  if (['admin-users', 'support', 'marketing'].includes(to.name as string)) return true
   try {
     const me = await fetchMe()
-    if (me.admin && (to.name === 'home' || to.name === 'feed')) {
-      return { name: 'admin-users' }
+    syncProfileFrom(me)
+    const onPublicEntry = to.name === 'home' || to.name === 'feed'
+    if (onPublicEntry) {
+      if (me.admin) return { name: 'admin-users' }
+      if (me.role === 'support') return { name: 'support' }
+      if (me.role === 'marketing') return { name: 'marketing' }
     }
   } catch {
     // ignore: let the route resolve normally if /api/me is unreachable

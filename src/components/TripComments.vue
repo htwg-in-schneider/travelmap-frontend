@@ -3,7 +3,7 @@ import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { type Comment } from '@/data'
 import { ApiError, fetchCommentsByTrip, createComment, deleteComment } from '@/services/api'
-import { auth0 } from '@/auth0'
+import { auth0, AUTH_UNAVAILABLE_MESSAGE, loginWithRedirectSafe } from '@/auth0'
 import { PaperAirplaneIcon, UserIcon, TrashIcon } from '@heroicons/vue/24/solid'
 
 const { isAuthenticated } = auth0
@@ -22,6 +22,7 @@ const posting = ref(false)
 const postError = ref('')
 const deletingIds = ref<Set<number>>(new Set())
 const deleteError = ref('')
+const authError = ref('')
 
 function resolveTripId(): number {
   const raw = Array.isArray(props.tripId) ? props.tripId[0] : props.tripId
@@ -110,9 +111,11 @@ async function removeComment(comment: Comment) {
 
 async function login() {
   try {
-    await auth0.loginWithRedirect()
+    authError.value = ''
+    await loginWithRedirectSafe()
   } catch (err) {
     console.error('[TripComments] loginWithRedirect failed:', err)
+    authError.value = err instanceof Error ? err.message : AUTH_UNAVAILABLE_MESSAGE
   }
 }
 
@@ -155,6 +158,7 @@ watch(() => props.tripId, () => {
       </button>
       , um einen Kommentar zu schreiben.
     </div>
+    <div v-if="authError" class="mb-3 text-sm text-red-500">{{ authError }}</div>
 
     <div v-if="postError" class="mb-3 text-sm text-red-500">{{ postError }}</div>
     <div v-if="deleteError" class="mb-3 text-sm text-red-500">{{ deleteError }}</div>

@@ -1,7 +1,6 @@
 import { watch } from 'vue'
-import { createRouter, createWebHistory, type NavigationGuardWithThis } from 'vue-router'
-import { authGuard } from '@auth0/auth0-vue'
-import { auth0 } from '@/auth0'
+import { createRouter, createWebHistory, type NavigationGuard, type RouteLocationNormalized } from 'vue-router'
+import { auth0, isAuthConfigured, loginWithRedirectSafe } from '@/auth0'
 import { fetchMe } from '@/services/api'
 import HomeView from '@/views/HomeView.vue'
 import FeedView from '@/views/FeedView.vue'
@@ -28,23 +27,34 @@ function waitForAuthReady(): Promise<void> {
   })
 }
 
+async function ensureAuthenticated(to: RouteLocationNormalized) {
+  await waitForAuthReady()
+  if (!isAuthConfigured) {
+    return { name: 'home', query: { message: 'auth-unavailable' } }
+  }
+  if (!auth0.isAuthenticated.value) {
+    await loginWithRedirectSafe({ appState: { target: to.fullPath } })
+    return false
+  }
+  return true
+}
+
+const requireAuth: NavigationGuard = async (to) => ensureAuthenticated(to)
+
 // Like authGuard, but additionally requires the admin permission (only known to the
 // backend, derived from the access token - see CurrentUserService.isAdmin).
-const adminGuard: NavigationGuardWithThis<undefined> = async (to, _from, next) => {
-  await waitForAuthReady()
-  if (!auth0.isAuthenticated.value) {
-    await auth0.loginWithRedirect({ appState: { target: to.fullPath } })
-    return
-  }
+const adminGuard: NavigationGuard = async (to) => {
+  const authResult = await ensureAuthenticated(to)
+  if (authResult !== true) return authResult
   try {
     const me = await fetchMe()
     if (me.admin) {
-      next()
+      return true
     } else {
-      next({ name: 'home' })
+      return { name: 'home' }
     }
   } catch {
-    next({ name: 'home' })
+    return { name: 'home' }
   }
 }
 
@@ -82,7 +92,7 @@ const router = createRouter({
       path: '/profile',
       name: 'profile',
       component: ProfileView,
-      beforeEnter: authGuard,
+      beforeEnter: requireAuth,
     },
     {
       path: '/trip/:id',
@@ -93,25 +103,25 @@ const router = createRouter({
       path: '/trip/create',
       name: 'create-trip-step0',
       component: CreateTripStep0,
-      beforeEnter: authGuard,
+      beforeEnter: requireAuth,
     },
     {
       path: '/trip/create/1',
       name: 'create-trip-step1',
       component: CreateTripStep1,
-      beforeEnter: authGuard,
+      beforeEnter: requireAuth,
     },
     {
       path: '/trip/create/2',
       name: 'create-trip-step2',
       component: CreateTripStep2,
-      beforeEnter: authGuard,
+      beforeEnter: requireAuth,
     },
     {
       path: '/trip/:id/edit',
       name: 'edit-trip',
       component: EditTripView,
-      beforeEnter: authGuard,
+      beforeEnter: requireAuth,
     },
     {
       path: '/admin/users',

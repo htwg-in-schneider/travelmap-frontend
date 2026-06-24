@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { type Trip } from '@/data'
 import { useSocialStore } from '@/stores/social'
-import { auth0 } from '@/auth0'
+import { auth0, AUTH_UNAVAILABLE_MESSAGE, loginWithRedirectSafe } from '@/auth0'
 import { HeartIcon as HeartSolid, ChatBubbleLeftIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/solid'
 import { HeartIcon as HeartOutline } from '@heroicons/vue/24/outline'
 import placeholder from '../../assets/placeholder.png'
@@ -30,9 +30,10 @@ function goProfile() {
 
 async function login() {
   try {
-    await auth0.loginWithRedirect()
+    await loginWithRedirectSafe()
   } catch (err) {
     console.error('[PostCard] loginWithRedirect failed:', err)
+    window.alert(err instanceof Error ? err.message : AUTH_UNAVAILABLE_MESSAGE)
   }
 }
 

@@ -26,7 +26,7 @@ import TravelCard from '@/components/TravelCard.vue'
 import TripFilter from '@/components/TripFilter.vue'
 import TripSearch from '@/components/TripSearch.vue'
 import Map from '@/components/Map.vue'
-import { auth0 } from '@/auth0'
+import { auth0, AUTH_UNAVAILABLE_MESSAGE, loginWithRedirectSafe } from '@/auth0'
 import { getContinentByCountryCode, type Continent } from '@/utils/continents'
 import { parseDateTime } from '@/utils/date'
 
@@ -278,6 +278,15 @@ function signOut() {
   auth0.logout({ logoutParams: { returnTo: window.location.origin + import.meta.env.BASE_URL } })
 }
 
+async function signInAgain() {
+  try {
+    await loginWithRedirectSafe()
+  } catch (err) {
+    console.error('[Profile] loginWithRedirect failed:', err)
+    loadError.value = err instanceof Error ? err.message : AUTH_UNAVAILABLE_MESSAGE
+  }
+}
+
 onUnmounted(() => {
   if (searchTimeout) clearTimeout(searchTimeout)
 })
@@ -311,7 +320,7 @@ onUnmounted(() => {
           <button
             v-if="!usernameParam && auth0.isAuthenticated.value"
             class="mt-4 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
-            @click="auth0.loginWithRedirect()"
+            @click="signInAgain"
           >
             Erneut anmelden
           </button>

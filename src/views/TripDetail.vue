@@ -5,7 +5,7 @@ import { type Trip } from '@/data'
 import { ChevronLeftIcon, ChevronRightIcon, PencilIcon, TrashIcon, HeartIcon } from '@heroicons/vue/24/solid'
 import { ApiError, fetchTripById, deleteTrip } from '@/services/api'
 import { useSocialStore } from '@/stores/social'
-import { auth0 } from '@/auth0'
+import { auth0, AUTH_UNAVAILABLE_MESSAGE, loginWithRedirectSafe } from '@/auth0'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
 import TripComments from '@/components/TripComments.vue'
@@ -38,9 +38,10 @@ const actionMessage = computed(() => {
 
 async function login() {
   try {
-    await auth0.loginWithRedirect()
+    await loginWithRedirectSafe()
   } catch (err) {
     console.error('[TripDetail] loginWithRedirect failed:', err)
+    error.value = err instanceof Error ? err.message : AUTH_UNAVAILABLE_MESSAGE
   }
 }
 

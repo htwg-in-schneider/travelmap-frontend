@@ -17,6 +17,7 @@ import {
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
 import Button from '@/components/Button.vue'
+import OptionsMenu from '@/components/OptionsMenu.vue'
 
 const users = ref<AdminUser[]>([])
 const loading = ref(true)
@@ -285,23 +286,27 @@ onMounted(async () => {
                       </span>
                     </td>
                     <td class="px-4 py-3 text-right">
-                      <div class="flex items-center justify-end gap-1">
-                        <button
-                          class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-gray-600 transition hover:bg-gray-100"
-                          @click="startEdit(user)"
-                        >
-                          <PencilIcon class="h-4 w-4" />
-                          Bearbeiten
-                        </button>
-                        <button
-                          class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-50"
-                          :disabled="deletingId === user.id"
-                          @click="removeUser(user)"
-                        >
-                          <TrashIcon class="h-4 w-4" />
-                          {{ deletingId === user.id ? 'Löschen…' : 'Löschen' }}
-                        </button>
-                      </div>
+                      <OptionsMenu label="Benutzeroptionen">
+                        <template #default="{ close }">
+                          <button
+                            class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-100"
+                            role="menuitem"
+                            @click="close(); startEdit(user)"
+                          >
+                            <PencilIcon class="h-4 w-4" />
+                            Bearbeiten
+                          </button>
+                          <button
+                            class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                            role="menuitem"
+                            :disabled="deletingId === user.id"
+                            @click="close(); removeUser(user)"
+                          >
+                            <TrashIcon class="h-4 w-4" />
+                            {{ deletingId === user.id ? 'Löschen…' : 'Löschen' }}
+                          </button>
+                        </template>
+                      </OptionsMenu>
                     </td>
                   </tr>
                   <tr v-if="editingId === user.id" class="border-t border-gray-100 bg-gray-50">
@@ -463,23 +468,27 @@ onMounted(async () => {
                 </span>
               </div>
               <div class="mb-3 text-sm text-gray-600">{{ formatAddress(user) }}</div>
-              <div class="flex items-center gap-2">
-                <button
-                  class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-gray-600 transition hover:bg-gray-100"
-                  @click="startEdit(user)"
-                >
-                  <PencilIcon class="h-4 w-4" />
-                  Bearbeiten
-                </button>
-                <button
-                  class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-50"
-                  :disabled="deletingId === user.id"
-                  @click="removeUser(user)"
-                >
-                  <TrashIcon class="h-4 w-4" />
-                  {{ deletingId === user.id ? 'Löschen…' : 'Löschen' }}
-                </button>
-              </div>
+              <OptionsMenu label="Benutzeroptionen">
+                <template #default="{ close }">
+                  <button
+                    class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-100"
+                    role="menuitem"
+                    @click="close(); startEdit(user)"
+                  >
+                    <PencilIcon class="h-4 w-4" />
+                    Bearbeiten
+                  </button>
+                  <button
+                    class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                    role="menuitem"
+                    :disabled="deletingId === user.id"
+                    @click="close(); removeUser(user)"
+                  >
+                    <TrashIcon class="h-4 w-4" />
+                    {{ deletingId === user.id ? 'Löschen…' : 'Löschen' }}
+                  </button>
+                </template>
+              </OptionsMenu>
 
               <div v-if="editingId === user.id" class="mt-4 border-t border-gray-100 pt-4">
                 <div v-if="saveError" class="mb-3 text-sm text-red-500">{{ saveError }}</div>

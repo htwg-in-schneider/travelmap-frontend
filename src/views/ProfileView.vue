@@ -22,6 +22,7 @@ import type { Trip, UserSummary } from '@/data'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
 import Button from '@/components/Button.vue'
+import OptionsMenu from '@/components/OptionsMenu.vue'
 import TravelCard from '@/components/TravelCard.vue'
 import TripFilter from '@/components/TripFilter.vue'
 import TripSearch from '@/components/TripSearch.vue'
@@ -381,22 +382,26 @@ onUnmounted(() => {
                 {{ profile.following ? 'Entfolgen' : 'Folgen' }}
               </button>
               <!-- Buttons nur für normale User (Staff hat Navbar-Dropdown) -->
-              <template v-if="profile.isMe && !isStaff">
-                <button
-                  class="flex items-center gap-1.5 rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-blue-600 hover:text-blue-600"
-                  @click="editMode = !editMode"
-                >
-                  <PencilIcon class="h-4 w-4" />
-                  {{ editMode ? 'Zurück' : 'Profil bearbeiten' }}
-                </button>
-                <button
-                  class="flex items-center gap-1.5 rounded-xl border-2 border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition hover:border-red-400 hover:bg-red-50"
-                  @click="signOut"
-                >
-                  <ArrowRightOnRectangleIcon class="h-4 w-4" />
-                  Abmelden
-                </button>
-              </template>
+              <OptionsMenu v-if="profile.isMe && !isStaff" label="Profiloptionen">
+                <template #default="{ close }">
+                  <button
+                    class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-100"
+                    role="menuitem"
+                    @click="close(); editMode = !editMode"
+                  >
+                    <PencilIcon class="h-4 w-4" />
+                    {{ editMode ? 'Zurück' : 'Profil bearbeiten' }}
+                  </button>
+                  <button
+                    class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-red-600 transition hover:bg-red-50"
+                    role="menuitem"
+                    @click="close(); signOut()"
+                  >
+                    <ArrowRightOnRectangleIcon class="h-4 w-4" />
+                    Abmelden
+                  </button>
+                </template>
+              </OptionsMenu>
             </div>
           </header>
           <p v-if="followError" class="mb-4 text-sm text-red-500">{{ followError }}</p>
@@ -522,7 +527,7 @@ onUnmounted(() => {
               </Button>
               <Button variant="secondary" @click="toggleSearch">
                 <MagnifyingGlassIcon class="h-5 w-5" />
-                <span class="ml-2">Suchen</span>
+                <span class="ml-2">Suche</span>
               </Button>
             </div>
 

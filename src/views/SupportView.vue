@@ -21,6 +21,7 @@ import { type Trip, type Comment } from '@/data'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
 import { useRouter } from 'vue-router'
+import OptionsMenu from '@/components/OptionsMenu.vue'
 
 type Tab = 'trips' | 'users'
 
@@ -89,7 +90,7 @@ async function toggleComments(trip: Trip) {
   if (!commentsMap.value[trip.id]) {
     commentsLoading.value = true
     try {
-      commentsMap.value[trip.id] = await fetchCommentsByTrip(trip.id)
+      commentsMap.value[trip.id] = await fetchCommentsByTrip(String(trip.id))
     } catch {
       commentsMap.value[trip.id] = []
     } finally {
@@ -232,42 +233,47 @@ function roleLabel(role: string): string {
                     <div class="font-medium text-gray-900 truncate">{{ trip.title }}</div>
                     <div class="text-xs text-gray-500">@{{ trip.authorUsername ?? '–' }} · {{ trip.countryCode ?? '–' }} · {{ trip.date }}</div>
                   </div>
-                  <div class="flex items-center gap-1 shrink-0">
-                    <button
-                      class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-gray-600 transition hover:bg-gray-100"
-                      @click="toggleComments(trip)"
-                      :title="expandedTripId === trip.id ? 'Kommentare ausblenden' : 'Kommentare anzeigen'"
-                    >
-                      <ChatBubbleLeftIcon class="h-4 w-4" />
-                      <span class="hidden sm:inline">{{ trip.commentCount }}</span>
-                      <ChevronUpIcon v-if="expandedTripId === trip.id" class="h-3 w-3" />
-                      <ChevronDownIcon v-else class="h-3 w-3" />
-                    </button>
-                    <button
-                      class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-gray-600 transition hover:bg-gray-100"
-                      @click="router.push({ name: 'trip-detail', params: { id: trip.id } })"
-                    >
-                      <EyeIcon class="h-4 w-4" />
-                      <span class="hidden sm:inline">Ansehen</span>
-                    </button>
-                    <button
-                      class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-50"
-                      :disabled="deletingTripId === trip.id"
-                      @click="removeTrip(trip)"
-                    >
-                      <TrashIcon class="h-4 w-4" />
-                      <span class="hidden sm:inline">{{ deletingTripId === trip.id ? 'Löschen…' : 'Löschen' }}</span>
-                    </button>
-                  </div>
+                  <OptionsMenu label="Tripoptionen">
+                    <template #default="{ close }">
+                      <button
+                        class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-100"
+                        role="menuitem"
+                        @click="close(); toggleComments(trip)"
+                      >
+                        <ChatBubbleLeftIcon class="h-4 w-4" />
+                        {{ expandedTripId === trip.id ? 'Kommentare ausblenden' : 'Kommentare anzeigen' }}
+                        <span class="ml-auto text-xs text-gray-500">{{ trip.commentCount }}</span>
+                        <ChevronUpIcon v-if="expandedTripId === trip.id" class="h-3 w-3" />
+                        <ChevronDownIcon v-else class="h-3 w-3" />
+                      </button>
+                      <button
+                        class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-100"
+                        role="menuitem"
+                        @click="close(); router.push({ name: 'trip-detail', params: { id: trip.id } })"
+                      >
+                        <EyeIcon class="h-4 w-4" />
+                        Ansehen
+                      </button>
+                      <button
+                        class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                        role="menuitem"
+                        :disabled="deletingTripId === trip.id"
+                        @click="close(); removeTrip(trip)"
+                      >
+                        <TrashIcon class="h-4 w-4" />
+                        {{ deletingTripId === trip.id ? 'Löschen…' : 'Löschen' }}
+                      </button>
+                    </template>
+                  </OptionsMenu>
                 </div>
 
                 <!-- Comments panel -->
                 <div v-if="expandedTripId === trip.id" class="border-t border-gray-100 bg-gray-50 px-4 py-3">
                   <div v-if="commentsLoading && !commentsMap[trip.id]" class="text-sm text-gray-400">Kommentare laden…</div>
-                  <div v-else-if="!commentsMap[trip.id] || commentsMap[trip.id].length === 0" class="text-sm text-gray-400">Keine Kommentare.</div>
+                  <div v-else-if="(commentsMap[trip.id]?.length ?? 0) === 0" class="text-sm text-gray-400">Keine Kommentare.</div>
                   <div v-else class="flex flex-col gap-2">
                     <div
-                      v-for="comment in commentsMap[trip.id]"
+                      v-for="comment in commentsMap[trip.id] ?? []"
                       :key="comment.id"
                       class="flex items-start justify-between gap-3 rounded-xl bg-white px-3 py-2 text-sm"
                     >

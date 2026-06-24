@@ -9,6 +9,7 @@ import { auth0, AUTH_UNAVAILABLE_MESSAGE, loginWithRedirectSafe } from '@/auth0'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
 import TripComments from '@/components/TripComments.vue'
+import OptionsMenu from '@/components/OptionsMenu.vue'
 import placeholder from '../../assets/placeholder.png'
 import { formatDateOnly } from '@/utils/date'
 
@@ -265,22 +266,26 @@ async function confirmDelete() {
               </button>
               <span class="text-sm text-gray-500">{{ trip.commentCount }} Kommentare</span>
             </div>
-            <div v-if="trip.canEdit" class="flex items-center gap-2">
-              <button
-                @click="goToEdit"
-                class="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 transition hover:border-blue-600 hover:text-blue-600"
-                aria-label="Bearbeiten"
-              >
-                <PencilIcon class="h-4 w-4" />
-              </button>
-              <button
-                @click="openDeleteDialog"
-                class="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white text-red-600 transition hover:border-red-600 hover:bg-red-50"
-                aria-label="Löschen"
-              >
-                <TrashIcon class="h-4 w-4" />
-              </button>
-            </div>
+            <OptionsMenu v-if="trip.canEdit" label="Reiseoptionen">
+              <template #default="{ close }">
+                <button
+                  class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-100"
+                  role="menuitem"
+                  @click="close(); goToEdit()"
+                >
+                  <PencilIcon class="h-4 w-4" />
+                  Bearbeiten
+                </button>
+                <button
+                  class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-red-600 transition hover:bg-red-50"
+                  role="menuitem"
+                  @click="close(); openDeleteDialog()"
+                >
+                  <TrashIcon class="h-4 w-4" />
+                  Löschen
+                </button>
+              </template>
+            </OptionsMenu>
           </div>
           <p class="mt-2 ml-auto text-right text-sm text-gray-500">{{ formatDateOnly(trip.date) }}</p>
         </div>

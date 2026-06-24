@@ -229,7 +229,7 @@ async function login() {
             </Button>
             <Button variant="secondary" @click="toggleSearch">
               <MagnifyingGlassIcon class="h-5 w-5" />
-              <span class="ml-2">Suchen</span>
+              <span class="ml-2">Suche</span>
             </Button>
           </div>
           <div v-if="showFilter" class="mb-6">

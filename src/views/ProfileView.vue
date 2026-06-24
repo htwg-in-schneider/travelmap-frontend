@@ -27,11 +27,14 @@ import TripFilter from '@/components/TripFilter.vue'
 import TripSearch from '@/components/TripSearch.vue'
 import Map from '@/components/Map.vue'
 import { auth0 } from '@/auth0'
+import { useUserRole } from '@/composables/useUserRole'
 import { getContinentByCountryCode, type Continent } from '@/utils/continents'
 import { parseDateTime } from '@/utils/date'
 
 const route = useRoute()
 const router = useRouter()
+const { isAdmin, isSupport, isMarketing } = useUserRole()
+const isStaff = computed(() => isAdmin.value || isSupport.value || isMarketing.value)
 
 const me = ref<MeResponse | null>(null)
 const profile = ref<UserSummary | null>(null)
@@ -368,29 +371,30 @@ onUnmounted(() => {
               >
                 {{ profile.following ? 'Entfolgen' : 'Folgen' }}
               </button>
-              <button
-                v-if="profile.isMe"
-                class="flex items-center gap-1.5 rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-blue-600 hover:text-blue-600"
-                @click="editMode = !editMode"
-              >
-                <PencilIcon class="h-4 w-4" />
-                {{ editMode ? 'Zurück' : 'Profil bearbeiten' }}
-              </button>
-              <button
-                v-if="profile.isMe"
-                class="flex items-center gap-1.5 rounded-xl border-2 border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition hover:border-red-400 hover:bg-red-50"
-                @click="signOut"
-              >
-                <ArrowRightOnRectangleIcon class="h-4 w-4" />
-                Abmelden
-              </button>
+              <!-- Buttons nur für normale User (Staff hat Navbar-Dropdown) -->
+              <template v-if="profile.isMe && !isStaff">
+                <button
+                  class="flex items-center gap-1.5 rounded-xl border-2 border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-blue-600 hover:text-blue-600"
+                  @click="editMode = !editMode"
+                >
+                  <PencilIcon class="h-4 w-4" />
+                  {{ editMode ? 'Zurück' : 'Profil bearbeiten' }}
+                </button>
+                <button
+                  class="flex items-center gap-1.5 rounded-xl border-2 border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition hover:border-red-400 hover:bg-red-50"
+                  @click="signOut"
+                >
+                  <ArrowRightOnRectangleIcon class="h-4 w-4" />
+                  Abmelden
+                </button>
+              </template>
             </div>
           </header>
           <p v-if="followError" class="mb-4 text-sm text-red-500">{{ followError }}</p>
 
-          <!-- Edit Form -->
+          <!-- Edit Form: normale User im editMode, Staff immer -->
           <form
-            v-if="profile.isMe && editMode"
+            v-if="profile.isMe && (editMode || isStaff)"
             class="mb-8 flex flex-col gap-5 rounded-2xl border-2 border-gray-200 bg-white p-6"
             @submit.prevent="submit"
           >
@@ -490,8 +494,8 @@ onUnmounted(() => {
             </button>
           </form>
 
-          <!-- Trips Section -->
-          <template v-if="!editMode">
+          <!-- Trips Section: für Staff auf eigenem Profil nicht anzeigen -->
+          <template v-if="!editMode && !(profile.isMe && isStaff)">
             <Map :trips="visibleTrips" class="my-6 h-128 w-full rounded-lg" />
 
             <div class="mb-3 flex gap-3">

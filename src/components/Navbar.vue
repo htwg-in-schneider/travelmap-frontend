@@ -23,7 +23,7 @@ const { isAdmin, isSupport, isMarketing, username } = useUserRole()
 const showProfileMenu = ref(false)
 
 function homeRoute() {
-  if (isAdmin.value) return { name: 'admin-users' }
+  if (isAdmin.value) return { name: 'admin-dashboard' }
   if (isSupport.value) return { name: 'support' }
   if (isMarketing.value) return { name: 'marketing' }
   return { name: 'home' }
@@ -274,10 +274,10 @@ async function goToProfile(userSummary: UserSummary) {
 
         <router-link
           v-if="isAdmin"
-          :to="{ name: 'admin-users' }"
+          :to="{ name: 'admin-dashboard' }"
           class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
-          aria-label="Benutzerverwaltung"
-          title="Benutzerverwaltung"
+          aria-label="Admin-Zentrale"
+          title="Admin-Zentrale"
         >
           <UsersIcon class="h-6 w-6" />
         </router-link>

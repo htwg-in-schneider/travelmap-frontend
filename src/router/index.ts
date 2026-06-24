@@ -11,7 +11,7 @@ import CreateTripStep1 from '@/views/CreateTripStep1.vue'
 import CreateTripStep2 from '@/views/CreateTripStep2.vue'
 import EditTripView from '@/views/EditTripView.vue'
 import ProfileView from '@/views/ProfileView.vue'
-import AdminUsersView from '@/views/AdminUsersView.vue'
+import AdminDashboardView from '@/views/AdminDashboardView.vue'
 import SupportView from '@/views/SupportView.vue'
 import MarketingView from '@/views/MarketingView.vue'
 import ImpressumView from '@/views/ImpressumView.vue'
@@ -154,9 +154,15 @@ const router = createRouter({
       beforeEnter: requireAuth,
     },
     {
+      path: '/admin',
+      name: 'admin-dashboard',
+      component: AdminDashboardView,
+      beforeEnter: adminGuard,
+    },
+    {
       path: '/admin/users',
       name: 'admin-users',
-      component: AdminUsersView,
+      redirect: { name: 'admin-dashboard', query: { tab: 'users' } },
       beforeEnter: adminGuard,
     },
     {
@@ -192,13 +198,13 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   await waitForAuthReady()
   if (!auth0.isAuthenticated.value) return true
-  if (['admin-users', 'support', 'marketing'].includes(to.name as string)) return true
+  if (['admin-dashboard', 'admin-users', 'support', 'marketing'].includes(to.name as string)) return true
   try {
     const me = await fetchMe()
     syncProfileFrom(me)
     const onPublicEntry = to.name === 'home' || to.name === 'feed'
     if (onPublicEntry) {
-      if (me.admin) return { name: 'admin-users' }
+      if (me.admin) return { name: 'admin-dashboard' }
       if (me.role === 'support') return { name: 'support' }
       if (me.role === 'marketing') return { name: 'marketing' }
     }

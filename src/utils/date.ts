@@ -12,3 +12,13 @@ export function formatDateOnly(value: string) {
 
   return `${day}.${month}.${year}`
 }
+
+export function formatDateTime(value: string) {
+  const time = Date.parse(value)
+  if (Number.isNaN(time)) return value
+
+  return new Intl.DateTimeFormat('de-DE', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(time))
+}

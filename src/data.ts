@@ -2,6 +2,7 @@ export interface Trip {
   id: number
   title: string
   date: string
+  createdAt: string
   text: string
   countryCode: string | null
   latitude: number | null
@@ -22,6 +23,7 @@ export interface Trip {
 export interface Comment {
   id: number
   text: string
+  createdAt: string
   authorName: string | null
   authorUsername: string | null
   authorAvatarUrl: string | null

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { auth0 } from '@/auth0'
 import { HomeIcon, NewspaperIcon, UserCircleIcon } from '@heroicons/vue/24/solid'
 import { useUserRole } from '@/composables/useUserRole'
@@ -9,6 +9,22 @@ const { isAuthenticated, isLoading, user } = auth0
 const { isAdmin, username } = useUserRole()
 
 const menuOpen = ref(false)
+const menuContainer = ref<HTMLDivElement | null>(null)
+
+function onDocumentClick(event: MouseEvent) {
+  if (!menuOpen.value || !menuContainer.value) return
+  if (!menuContainer.value.contains(event.target as Node)) {
+    menuOpen.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', onDocumentClick)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', onDocumentClick)
+})
 
 async function login() {
   try {
@@ -62,9 +78,9 @@ function signOut() {
         Anmelden
       </button>
 
-      <div v-else-if="isAuthenticated" class="relative">
+      <div v-else-if="isAuthenticated" ref="menuContainer" class="relative">
         <button
-          @click="menuOpen = !menuOpen"
+          @click.stop="menuOpen = !menuOpen"
           class="flex items-center gap-1.5"
           aria-label="Benutzermenü"
         >

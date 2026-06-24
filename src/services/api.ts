@@ -289,6 +289,12 @@ export async function deleteSupportComment(id: number): Promise<void> {
   return sendJson('DELETE', `${SUPPORT_URL}/comments/${id}`)
 }
 
+export async function fetchSupportUsers(q?: string): Promise<AdminUser[]> {
+  const url = new URL(`${SUPPORT_URL}/users`)
+  if (q) url.searchParams.set('q', q)
+  return getJson<AdminUser[]>(url.toString())
+}
+
 // ---------------------------------------------------------------------------
 // Marketing
 // ---------------------------------------------------------------------------
@@ -299,6 +305,9 @@ export interface MarketingStats {
   totalComments: number
   totalLikes: number
   countriesVisited: number
+  tripsThisMonth: number
+  usersThisWeek: number
+  commentsToday: number
   topCountries: { countryCode: string; tripCount: number }[]
   tripsPerMonth: { month: string; count: number }[]
   topUsers: { username: string; tripCount: number }[]
@@ -306,6 +315,10 @@ export interface MarketingStats {
 
 export async function fetchMarketingStats(): Promise<MarketingStats> {
   return getJson<MarketingStats>(`${MARKETING_URL}/stats`)
+}
+
+export async function fetchMarketingTrips(): Promise<Trip[]> {
+  return getJson<Trip[]>(`${MARKETING_URL}/trips`)
 }
 
 // ---------------------------------------------------------------------------

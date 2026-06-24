@@ -40,6 +40,15 @@ watch(
   { immediate: true },
 )
 
+export function syncProfileFrom(me: { admin: boolean; role?: string; displayName: string; username: string; avatarUrl?: string | null }) {
+  isAdmin.value = me.admin
+  role.value = me.role ?? 'user'
+  displayName.value = me.displayName
+  username.value = me.username
+  avatarUrl.value = me.avatarUrl || null
+  profileFetched.value = true
+}
+
 export function useUserRole() {
   return { isAdmin, isSupport, isMarketing, role, displayName, username, avatarUrl, profileFetched }
 }

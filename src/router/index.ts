@@ -3,6 +3,7 @@ import { createRouter, createWebHistory, type NavigationGuardWithThis } from 'vu
 import { authGuard } from '@auth0/auth0-vue'
 import { auth0 } from '@/auth0'
 import { fetchMe } from '@/services/api'
+import { syncProfileFrom } from '@/composables/useUserRole'
 import HomeView from '@/views/HomeView.vue'
 import FeedView from '@/views/FeedView.vue'
 import TripDetail from '@/views/TripDetail.vue'
@@ -181,6 +182,7 @@ router.beforeEach(async (to) => {
   if (['admin-users', 'support', 'marketing'].includes(to.name as string)) return true
   try {
     const me = await fetchMe()
+    syncProfileFrom(me)
     const onPublicEntry = to.name === 'home' || to.name === 'feed'
     if (onPublicEntry) {
       if (me.admin) return { name: 'admin-users' }

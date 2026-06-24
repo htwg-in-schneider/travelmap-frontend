@@ -5,9 +5,10 @@ import { ArrowLeftIcon } from '@heroicons/vue/24/solid'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { type Trip } from '@/data'
-import { fetchTripById, updateTrip } from '@/services/api'
+import { ApiError, fetchTripById, updateTrip, type CreateTripPayload } from '@/services/api'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
+import { validateTripPayload } from '@/utils/tripValidation'
 
 const route = useRoute()
 const router = useRouter()
@@ -113,6 +114,14 @@ onMounted(async () => {
       return
     }
     trip.value = data
+    if (!data.canEdit) {
+      await router.replace({
+        name: 'trip-detail',
+        params: { id: data.id.toString() },
+        query: { message: 'edit-forbidden' },
+      })
+      return
+    }
     title.value = data.title
     text.value = data.text
     date.value = data.date ? data.date.slice(0, 10) : ''
@@ -141,17 +150,35 @@ async function submit() {
   saving.value = true
   saveError.value = ''
   try {
-    await updateTrip(trip.value.id, {
+    const payload: CreateTripPayload = {
       title: title.value.trim(),
       date: date.value ? new Date(date.value).toISOString() : trip.value.date,
       text: text.value.trim(),
       countryCode: countryCode.value,
       latitude: lat.value,
       longitude: lng.value,
-    })
+    }
+    const validationError = validateTripPayload(payload)
+    if (validationError) {
+      saveError.value = validationError
+      return
+    }
+    await updateTrip(trip.value.id, payload)
     router.push({ name: 'trip-detail', params: { id: trip.value.id.toString() } })
-  } catch {
-    saveError.value = 'Fehler beim Speichern. Bitte versuche es erneut.'
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 403) {
+      await router.replace({
+        name: 'trip-detail',
+        params: { id: trip.value.id.toString() },
+        query: { message: 'edit-forbidden' },
+      })
+      return
+    }
+    if (err instanceof ApiError) {
+      saveError.value = err.message
+    } else {
+      saveError.value = 'Fehler beim Speichern. Bitte versuche es erneut.'
+    }
   } finally {
     saving.value = false
   }
@@ -184,6 +211,7 @@ async function submit() {
                 id="edit-title"
                 v-model="title"
                 type="text"
+                maxlength="120"
                 class="rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 transition-colors outline-none placeholder:text-gray-400 focus:border-blue-600"
               />
             </div>
@@ -204,6 +232,7 @@ async function submit() {
                 id="edit-description"
                 v-model="text"
                 rows="5"
+                maxlength="10000"
                 class="resize-none rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 transition-colors outline-none placeholder:text-gray-400 focus:border-blue-600"
               />
             </div>

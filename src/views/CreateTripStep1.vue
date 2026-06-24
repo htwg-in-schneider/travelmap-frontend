@@ -2,10 +2,12 @@
 import { useRouter } from 'vue-router'
 import { ArrowLeftIcon } from '@heroicons/vue/24/solid'
 import { useCreateTripStore } from '@/stores/createTrip'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { TRIP_TEXT_MAX_LENGTH, TRIP_TITLE_MAX_LENGTH } from '@/utils/tripValidation'
 
 const router = useRouter()
 const store = useCreateTripStore()
+const error = ref('')
 
 const canProceed = computed(() => store.title.trim().length > 0 && store.text.trim().length > 0)
 
@@ -14,6 +16,25 @@ function goBack() {
 }
 
 function next() {
+  const title = store.title.trim()
+  const text = store.text.trim()
+  if (!title) {
+    error.value = 'Titel ist ein Pflichtfeld.'
+    return
+  }
+  if (title.length > TRIP_TITLE_MAX_LENGTH) {
+    error.value = `Titel darf maximal ${TRIP_TITLE_MAX_LENGTH} Zeichen lang sein.`
+    return
+  }
+  if (!text) {
+    error.value = 'Beschreibung ist ein Pflichtfeld.'
+    return
+  }
+  if (text.length > TRIP_TEXT_MAX_LENGTH) {
+    error.value = `Beschreibung darf maximal ${TRIP_TEXT_MAX_LENGTH} Zeichen lang sein.`
+    return
+  }
+  error.value = ''
   if (canProceed.value) {
     router.push({ name: 'create-trip-step2' })
   }
@@ -34,13 +55,17 @@ function next() {
       </div>
 
       <div class="-mt-36 flex flex-1 flex-col justify-center">
-        <div class="flex flex-col gap-5">
+          <div class="flex flex-col gap-5">
+          <div v-if="error" class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+            {{ error }}
+          </div>
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-gray-700" for="title">Titel</label>
             <input
               id="title"
               v-model="store.title"
               type="text"
+              maxlength="120"
               placeholder="z. B. Sommer in Japan"
               class="rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 transition-colors outline-none placeholder:text-gray-400 focus:border-blue-600"
             />
@@ -53,6 +78,7 @@ function next() {
               v-model="store.text"
               placeholder="Was hast du erlebt?"
               rows="5"
+              maxlength="10000"
               class="resize-none rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 transition-colors outline-none placeholder:text-gray-400 focus:border-blue-600"
             />
           </div>

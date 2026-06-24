@@ -6,7 +6,15 @@ import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { useCreateTripStore } from '@/stores/createTrip'
 import { useMapStore } from '@/stores/map'
-import { createTrip, requestImageUploadUrls, uploadImageToR2, saveTripImages } from '@/services/api'
+import {
+  ApiError,
+  createTrip,
+  requestImageUploadUrls,
+  uploadImageToR2,
+  saveTripImages,
+  type CreateTripPayload,
+} from '@/services/api'
+import { validateTripPayload } from '@/utils/tripValidation'
 
 const router = useRouter()
 const store = useCreateTripStore()
@@ -98,14 +106,21 @@ async function submit() {
   saving.value = true
   error.value = ''
   try {
-    const trip = await createTrip({
+    const payload: CreateTripPayload = {
       title: locationName.value.trim(),
       date: new Date().toISOString(),
-      text: store.text,
+      text: store.text.trim(),
       countryCode: store.countryCode || null,
       latitude: store.lat,
       longitude: store.lng,
-    })
+    }
+    const validationError = validateTripPayload(payload)
+    if (validationError) {
+      error.value = validationError
+      return
+    }
+
+    const trip = await createTrip(payload)
 
     if (store.images.length > 0) {
       const presignedUploads = await requestImageUploadUrls(trip.id, store.images)
@@ -128,8 +143,12 @@ async function submit() {
     }
     store.reset()
     router.push({ name: 'home' })
-  } catch {
-    error.value = 'Fehler beim Speichern. Bitte versuche es erneut.'
+  } catch (err) {
+    if (err instanceof ApiError) {
+      error.value = err.message
+    } else {
+      error.value = 'Fehler beim Speichern. Bitte versuche es erneut.'
+    }
   } finally {
     saving.value = false
   }

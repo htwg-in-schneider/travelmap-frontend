@@ -2,7 +2,7 @@
 import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { type Comment } from '@/data'
-import { fetchCommentsByTrip, createComment, deleteComment } from '@/services/api'
+import { ApiError, fetchCommentsByTrip, createComment, deleteComment } from '@/services/api'
 import { auth0 } from '@/auth0'
 import { PaperAirplaneIcon, UserIcon, TrashIcon } from '@heroicons/vue/24/solid'
 
@@ -63,7 +63,13 @@ async function postComment() {
     await loadComments()
   } catch (err) {
     console.error('Error posting comment:', err)
-    postError.value = 'Fehler beim Posten des Kommentars.'
+    if (err instanceof ApiError && err.status === 401) {
+      postError.value = 'Bitte melde dich an, um zu kommentieren.'
+    } else if (err instanceof ApiError) {
+      postError.value = err.message
+    } else {
+      postError.value = 'Fehler beim Posten des Kommentars.'
+    }
   } finally {
     posting.value = false
   }
@@ -88,7 +94,15 @@ async function removeComment(comment: Comment) {
     comments.value = comments.value.filter((c) => c.id !== comment.id)
   } catch (err) {
     console.error('Error deleting comment:', err)
-    deleteError.value = 'Fehler beim Löschen des Kommentars.'
+    if (err instanceof ApiError && err.status === 403) {
+      deleteError.value = 'Du darfst diesen Kommentar nicht löschen.'
+    } else if (err instanceof ApiError && err.status === 401) {
+      deleteError.value = 'Bitte melde dich an, um Kommentare zu löschen.'
+    } else if (err instanceof ApiError) {
+      deleteError.value = err.message
+    } else {
+      deleteError.value = 'Fehler beim Löschen des Kommentars.'
+    }
   } finally {
     deletingIds.value.delete(comment.id)
   }

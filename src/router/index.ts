@@ -12,6 +12,8 @@ import CreateTripStep2 from '@/views/CreateTripStep2.vue'
 import EditTripView from '@/views/EditTripView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import AdminUsersView from '@/views/AdminUsersView.vue'
+import SupportView from '@/views/SupportView.vue'
+import MarketingView from '@/views/MarketingView.vue'
 import ImpressumView from '@/views/ImpressumView.vue'
 import DatenschutzView from '@/views/DatenschutzView.vue'
 import KontaktView from '@/views/KontaktView.vue'
@@ -38,11 +40,35 @@ const adminGuard: NavigationGuardWithThis<undefined> = async (to, _from, next) =
   }
   try {
     const me = await fetchMe()
-    if (me.admin) {
-      next()
-    } else {
-      next({ name: 'home' })
-    }
+    if (me.admin) { next() } else { next({ name: 'home' }) }
+  } catch {
+    next({ name: 'home' })
+  }
+}
+
+const supportGuard: NavigationGuardWithThis<undefined> = async (to, _from, next) => {
+  await waitForAuthReady()
+  if (!auth0.isAuthenticated.value) {
+    await auth0.loginWithRedirect({ appState: { target: to.fullPath } })
+    return
+  }
+  try {
+    const me = await fetchMe()
+    if (me.role === 'support' || me.admin) { next() } else { next({ name: 'home' }) }
+  } catch {
+    next({ name: 'home' })
+  }
+}
+
+const marketingGuard: NavigationGuardWithThis<undefined> = async (to, _from, next) => {
+  await waitForAuthReady()
+  if (!auth0.isAuthenticated.value) {
+    await auth0.loginWithRedirect({ appState: { target: to.fullPath } })
+    return
+  }
+  try {
+    const me = await fetchMe()
+    if (me.role === 'marketing' || me.admin) { next() } else { next({ name: 'home' }) }
   } catch {
     next({ name: 'home' })
   }
@@ -120,6 +146,18 @@ const router = createRouter({
       beforeEnter: adminGuard,
     },
     {
+      path: '/support',
+      name: 'support',
+      component: SupportView,
+      beforeEnter: supportGuard,
+    },
+    {
+      path: '/marketing',
+      name: 'marketing',
+      component: MarketingView,
+      beforeEnter: marketingGuard,
+    },
+    {
       path: '/impressum',
       name: 'impressum',
       component: ImpressumView,
@@ -140,11 +178,14 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   await waitForAuthReady()
   if (!auth0.isAuthenticated.value) return true
-  if (to.name === 'admin-users') return true
+  if (['admin-users', 'support', 'marketing'].includes(to.name as string)) return true
   try {
     const me = await fetchMe()
-    if (me.admin && (to.name === 'home' || to.name === 'feed')) {
-      return { name: 'admin-users' }
+    const onPublicEntry = to.name === 'home' || to.name === 'feed'
+    if (onPublicEntry) {
+      if (me.admin) return { name: 'admin-users' }
+      if (me.role === 'support') return { name: 'support' }
+      if (me.role === 'marketing') return { name: 'marketing' }
     }
   } catch {
     // ignore: let the route resolve normally if /api/me is unreachable

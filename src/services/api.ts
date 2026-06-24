@@ -22,6 +22,8 @@ const FEED_URL = `${API_BASE_URL}/api/feed`
 const USER_URL = `${API_BASE_URL}/api/user`
 const ME_URL = `${API_BASE_URL}/api/me`
 const ADMIN_USERS_URL = `${API_BASE_URL}/api/admin/users`
+const SUPPORT_URL = `${API_BASE_URL}/api/support`
+const MARKETING_URL = `${API_BASE_URL}/api/marketing`
 
 export interface PresignedUpload {
   uploadUrl: string
@@ -212,6 +214,7 @@ export interface MeResponse {
   city: string | null
   country: string | null
   admin: boolean
+  role: string
   tripCount: number
   followingCount: number
   followerCount: number
@@ -245,6 +248,7 @@ export interface AdminUser {
   city: string | null
   country: string | null
   admin: boolean
+  role: string
 }
 
 export async function fetchAdminUsers(): Promise<AdminUser[]> {
@@ -256,7 +260,7 @@ export async function updateAdminUser(
   payload: Partial<
     Pick<
       AdminUser,
-      'username' | 'displayName' | 'email' | 'bio' | 'street' | 'postalCode' | 'city' | 'country'
+      'username' | 'displayName' | 'email' | 'bio' | 'street' | 'postalCode' | 'city' | 'country' | 'role'
     >
   >,
 ): Promise<AdminUser> {
@@ -265,6 +269,43 @@ export async function updateAdminUser(
 
 export async function deleteAdminUser(id: number): Promise<void> {
   return sendJson('DELETE', `${ADMIN_USERS_URL}/${id}`)
+}
+
+// ---------------------------------------------------------------------------
+// Support
+// ---------------------------------------------------------------------------
+
+export async function fetchSupportTrips(q?: string): Promise<Trip[]> {
+  const url = new URL(`${SUPPORT_URL}/trips`)
+  if (q) url.searchParams.set('q', q)
+  return getJson<Trip[]>(url.toString())
+}
+
+export async function deleteSupportTrip(id: number): Promise<void> {
+  return sendJson('DELETE', `${SUPPORT_URL}/trips/${id}`)
+}
+
+export async function deleteSupportComment(id: number): Promise<void> {
+  return sendJson('DELETE', `${SUPPORT_URL}/comments/${id}`)
+}
+
+// ---------------------------------------------------------------------------
+// Marketing
+// ---------------------------------------------------------------------------
+
+export interface MarketingStats {
+  totalTrips: number
+  totalUsers: number
+  totalComments: number
+  totalLikes: number
+  countriesVisited: number
+  topCountries: { countryCode: string; tripCount: number }[]
+  tripsPerMonth: { month: string; count: number }[]
+  topUsers: { username: string; tripCount: number }[]
+}
+
+export async function fetchMarketingStats(): Promise<MarketingStats> {
+  return getJson<MarketingStats>(`${MARKETING_URL}/stats`)
 }
 
 // ---------------------------------------------------------------------------

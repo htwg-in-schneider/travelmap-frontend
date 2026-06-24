@@ -5,27 +5,34 @@ import {
   NewspaperIcon,
   UserCircleIcon,
   UsersIcon,
+  ShieldCheckIcon,
+  ChartBarIcon,
 } from '@heroicons/vue/24/solid'
 import { useUserRole } from '@/composables/useUserRole'
 import logo from '../../assets/travelmap-logo.svg'
 
 const { isAuthenticated, user } = auth0
-const { isAdmin, username } = useUserRole()
+const { isAdmin, isSupport, isMarketing, username } = useUserRole()
+
+function homeRoute() {
+  if (isAdmin.value) return { name: 'admin-users' }
+  if (isSupport.value) return { name: 'support' }
+  if (isMarketing.value) return { name: 'marketing' }
+  return { name: 'home' }
+}
 </script>
 
 <template>
   <nav
     class="fixed top-0 right-0 left-0 z-50 flex items-center justify-between bg-gray-50/90 px-6 py-4 backdrop-blur-sm"
   >
-    <router-link
-      :to="isAdmin ? { name: 'admin-users' } : { name: 'home' }"
-      class="flex items-center gap-2"
-    >
+    <router-link :to="homeRoute()" class="flex items-center gap-2">
       <img :src="logo" alt="Travelmap Logo" class="h-8 w-auto" />
       <span class="text-xl text-gray-900">Travelmap</span>
     </router-link>
     <div v-if="isAuthenticated" class="flex items-center gap-4">
-      <template v-if="!isAdmin">
+      <!-- Regular user -->
+      <template v-if="!isAdmin && !isSupport && !isMarketing">
         <router-link
           :to="{ name: 'home' }"
           class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
@@ -43,8 +50,10 @@ const { isAdmin, username } = useUserRole()
           <NewspaperIcon class="h-6 w-6" />
         </router-link>
       </template>
+
+      <!-- Admin -->
       <router-link
-        v-else
+        v-if="isAdmin"
         :to="{ name: 'admin-users' }"
         class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
         aria-label="Benutzerverwaltung"
@@ -52,6 +61,30 @@ const { isAdmin, username } = useUserRole()
       >
         <UsersIcon class="h-6 w-6" />
       </router-link>
+
+      <!-- Support -->
+      <router-link
+        v-if="isSupport"
+        :to="{ name: 'support' }"
+        class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+        aria-label="Support – Moderation"
+        title="Moderation"
+      >
+        <ShieldCheckIcon class="h-6 w-6" />
+      </router-link>
+
+      <!-- Marketing -->
+      <router-link
+        v-if="isMarketing"
+        :to="{ name: 'marketing' }"
+        class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+        aria-label="Marketing – Statistiken"
+        title="Statistiken"
+      >
+        <ChartBarIcon class="h-6 w-6" />
+      </router-link>
+
+      <!-- Profile (all roles) -->
       <router-link
         :to="username ? { name: 'profile-username', params: { username } } : { name: 'profile' }"
         class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"

@@ -33,9 +33,12 @@ Create a local `.env` file and set:
 
 ```sh
 VITE_MAPBOX_KEY=your_mapbox_key
+VITE_AUTH0_DOMAIN=your_auth0_domain
+VITE_AUTH0_CLIENT_ID=your_auth0_client_id
+VITE_AUTH0_AUDIENCE=your_auth0_api_identifier
 ```
 
-`VITE_API_BASE_URL` is required; it is already set in `.env.development` for local development (`http://localhost:8081`) and in `.env.production` for production builds (`https://travelmap-backend-94cp.onrender.com`).
+`VITE_API_BASE_URL` and `VITE_AUTH0_AUDIENCE` are required. `VITE_API_BASE_URL` is already set in `.env.development` for local development (`http://localhost:8081`) and in `.env.production` for production builds (`https://travelmap-backend-94cp.onrender.com`). `VITE_AUTH0_AUDIENCE` is set in both files to `https://travelmap.api`.
 
 ### Compile and Hot-Reload for Development
 

@@ -1,30 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
 import { auth0 } from '@/auth0'
-import { HomeIcon, NewspaperIcon, UserCircleIcon } from '@heroicons/vue/24/solid'
+import {
+  HomeIcon,
+  NewspaperIcon,
+  UserCircleIcon,
+  UsersIcon,
+} from '@heroicons/vue/24/solid'
 import { useUserRole } from '@/composables/useUserRole'
 import logo from '../../assets/travelmap-logo.svg'
 
 const { isAuthenticated, isLoading, user } = auth0
 const { isAdmin, username } = useUserRole()
-
-const menuOpen = ref(false)
-const menuContainer = ref<HTMLDivElement | null>(null)
-
-function onDocumentClick(event: MouseEvent) {
-  if (!menuOpen.value || !menuContainer.value) return
-  if (!menuContainer.value.contains(event.target as Node)) {
-    menuOpen.value = false
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('click', onDocumentClick)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', onDocumentClick)
-})
 
 async function login() {
   try {
@@ -32,11 +18,6 @@ async function login() {
   } catch (err) {
     console.error('[Navbar] loginWithRedirect failed:', err)
   }
-}
-
-function signOut() {
-  menuOpen.value = false
-  auth0.logout({ logoutParams: { returnTo: window.location.origin + import.meta.env.BASE_URL } })
 }
 </script>
 
@@ -78,11 +59,22 @@ function signOut() {
         Anmelden
       </button>
 
-      <div v-else-if="isAuthenticated" ref="menuContainer" class="relative">
-        <button
-          @click.stop="menuOpen = !menuOpen"
-          class="flex items-center gap-1.5"
-          aria-label="Benutzermenü"
+      <template v-else-if="isAuthenticated">
+        <router-link
+          v-if="isAdmin"
+          :to="{ name: 'admin-users' }"
+          class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+          aria-label="Benutzerverwaltung"
+          title="Benutzerverwaltung"
+        >
+          <UsersIcon class="h-6 w-6" />
+        </router-link>
+        <router-link
+          v-if="username"
+          :to="{ name: 'profile-username', params: { username } }"
+          class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+          aria-label="Mein Profil"
+          title="Mein Profil"
         >
           <img
             v-if="user?.picture"
@@ -90,47 +82,9 @@ function signOut() {
             :alt="user?.name ?? 'Profilbild'"
             class="h-8 w-8 rounded-full"
           />
-          <UserCircleIcon v-else class="h-8 w-8 text-gray-800" />
-        </button>
-
-        <div
-          v-if="menuOpen"
-          class="absolute right-0 mt-2 w-48 rounded-xl border border-gray-200 bg-white p-2 shadow-lg"
-          @click.self="menuOpen = false"
-        >
-          <div class="px-2 py-1.5 text-sm text-gray-900">
-            {{ user?.name }}
-            <span
-              v-if="isAdmin"
-              class="ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700"
-            >
-              Admin
-            </span>
-          </div>
-          <router-link
-            v-if="username && !isAdmin"
-            :to="{ name: 'profile-username', params: { username } }"
-            class="block w-full rounded-lg px-2 py-1.5 text-left text-sm text-gray-700 transition hover:bg-gray-100"
-            @click="menuOpen = false"
-          >
-            Mein Profil
-          </router-link>
-          <router-link
-            v-if="isAdmin"
-            :to="{ name: 'admin-users' }"
-            class="block w-full rounded-lg px-2 py-1.5 text-left text-sm text-gray-700 transition hover:bg-gray-100"
-            @click="menuOpen = false"
-          >
-            Benutzerverwaltung
-          </router-link>
-          <button
-            @click="signOut"
-            class="w-full rounded-lg px-2 py-1.5 text-left text-sm text-gray-700 transition hover:bg-gray-100"
-          >
-            Abmelden
-          </button>
-        </div>
-      </div>
+          <UserCircleIcon v-else class="h-7 w-7 text-gray-800" />
+        </router-link>
+      </template>
     </div>
   </nav>
 </template>

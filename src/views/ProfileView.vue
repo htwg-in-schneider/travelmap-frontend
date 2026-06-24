@@ -7,6 +7,7 @@ import {
   FunnelIcon,
   MagnifyingGlassIcon,
   PencilIcon,
+  ArrowRightOnRectangleIcon,
 } from '@heroicons/vue/24/solid'
 import {
   fetchMe,
@@ -273,6 +274,10 @@ function toggleSearch() {
   showSearch.value = !showSearch.value
 }
 
+function signOut() {
+  auth0.logout({ logoutParams: { returnTo: window.location.origin + import.meta.env.BASE_URL } })
+}
+
 onUnmounted(() => {
   if (searchTimeout) clearTimeout(searchTimeout)
 })
@@ -370,6 +375,14 @@ onUnmounted(() => {
               >
                 <PencilIcon class="h-4 w-4" />
                 {{ editMode ? 'Zurück' : 'Profil bearbeiten' }}
+              </button>
+              <button
+                v-if="profile.isMe"
+                class="flex items-center gap-1.5 rounded-xl border-2 border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition hover:border-red-400 hover:bg-red-50"
+                @click="signOut"
+              >
+                <ArrowRightOnRectangleIcon class="h-4 w-4" />
+                Abmelden
               </button>
             </div>
           </header>

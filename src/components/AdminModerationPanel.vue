@@ -9,6 +9,7 @@ import {
   ChevronUpIcon,
   HeartIcon,
   LockClosedIcon,
+  UserIcon,
 } from '@heroicons/vue/24/solid'
 import {
   fetchSupportTrips,
@@ -20,6 +21,7 @@ import {
 import { type Trip, type Comment } from '@/data'
 import { useRouter } from 'vue-router'
 import OptionsMenu from '@/components/OptionsMenu.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { formatDateOnly, formatDateTime } from '@/utils/date'
 
 const router = useRouter()
@@ -35,6 +37,8 @@ const expandedTripId = ref<number | null>(null)
 const commentsMap = ref<Record<number, Comment[]>>({})
 const commentsLoading = ref(false)
 const deletingCommentId = ref<number | null>(null)
+const tripPendingDelete = ref<Trip | null>(null)
+const commentPendingDelete = ref<{ tripId: number; comment: Comment } | null>(null)
 
 const filteredTrips = computed(() => {
   const term = tripSearchTerm.value.trim().toLowerCase()
@@ -57,8 +61,13 @@ onMounted(async () => {
   }
 })
 
-async function removeTrip(trip: Trip) {
-  if (!confirm(`Soll der Trip „${trip.title}" von @${trip.authorUsername ?? '?'} wirklich gelöscht werden?`)) return
+function requestRemoveTrip(trip: Trip) {
+  tripPendingDelete.value = trip
+}
+
+async function removeTrip() {
+  const trip = tripPendingDelete.value
+  if (!trip) return
   deletingTripId.value = trip.id
   tripErr.value = ''
   try {
@@ -66,6 +75,7 @@ async function removeTrip(trip: Trip) {
     trips.value = trips.value.filter((t) => t.id !== trip.id)
     if (expandedTripId.value === trip.id) expandedTripId.value = null
     tripMsg.value = 'Trip gelöscht.'
+    tripPendingDelete.value = null
     setTimeout(() => {
       tripMsg.value = ''
     }, 3000)
@@ -95,7 +105,14 @@ async function toggleComments(trip: Trip) {
   }
 }
 
-async function removeComment(tripId: number, comment: Comment) {
+function requestRemoveComment(tripId: number, comment: Comment) {
+  commentPendingDelete.value = { tripId, comment }
+}
+
+async function removeComment() {
+  const pending = commentPendingDelete.value
+  if (!pending) return
+  const { tripId, comment } = pending
   deletingCommentId.value = comment.id
   tripErr.value = ''
   try {
@@ -105,6 +122,7 @@ async function removeComment(tripId: number, comment: Comment) {
       t.id === tripId ? { ...t, commentCount: Math.max(0, t.commentCount - 1) } : t,
     )
     tripMsg.value = 'Kommentar gelöscht.'
+    commentPendingDelete.value = null
     setTimeout(() => {
       tripMsg.value = ''
     }, 3000)
@@ -195,7 +213,7 @@ async function removeComment(tripId: number, comment: Comment) {
                   class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                   role="menuitem"
                   :disabled="deletingTripId === trip.id"
-                  @click="close(); removeTrip(trip)"
+                  @click="close(); requestRemoveTrip(trip)"
                 >
                   <TrashIcon class="h-4 w-4" />
                   {{ deletingTripId === trip.id ? 'Löschen…' : 'Löschen' }}
@@ -213,17 +231,31 @@ async function removeComment(tripId: number, comment: Comment) {
                 :key="comment.id"
                 class="flex items-start justify-between gap-3 rounded-xl bg-white px-3 py-2 text-sm"
               >
-                <div class="min-w-0">
-                  <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
-                    <span class="font-medium text-gray-700">@{{ comment.authorUsername ?? '?' }}</span>
-                    <span>{{ formatDateTime(comment.createdAt) }}</span>
+                <div class="flex min-w-0 gap-2">
+                  <img
+                    v-if="comment.authorAvatarUrl"
+                    :src="comment.authorAvatarUrl"
+                    :alt="comment.authorName ?? comment.authorUsername ?? 'Profilbild'"
+                    class="mt-0.5 h-8 w-8 shrink-0 rounded-full object-cover"
+                  />
+                  <div
+                    v-else
+                    class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100"
+                  >
+                    <UserIcon class="h-5 w-5 text-gray-500" />
                   </div>
-                  <div class="mt-1 text-gray-600">{{ comment.text }}</div>
+                  <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
+                      <span class="font-medium text-gray-700">@{{ comment.authorUsername ?? '?' }}</span>
+                      <span>{{ formatDateTime(comment.createdAt) }}</span>
+                    </div>
+                    <div class="mt-1 text-gray-600">{{ comment.text }}</div>
+                  </div>
                 </div>
                 <button
                   class="shrink-0 rounded-lg px-2 py-1 text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                   :disabled="deletingCommentId === comment.id"
-                  @click="removeComment(trip.id, comment)"
+                  @click="requestRemoveComment(trip.id, comment)"
                   title="Kommentar löschen"
                 >
                   <TrashIcon class="h-4 w-4" />
@@ -234,5 +266,24 @@ async function removeComment(tripId: number, comment: Comment) {
         </div>
       </template>
     </div>
+
+    <ConfirmDialog
+      :open="tripPendingDelete !== null"
+      title="Trip löschen?"
+      :message="`Soll der Trip '${tripPendingDelete?.title ?? ''}' von @${tripPendingDelete?.authorUsername ?? '?'} wirklich gelöscht werden?`"
+      confirm-label="Trip löschen"
+      :loading="tripPendingDelete ? deletingTripId === tripPendingDelete.id : false"
+      @cancel="tripPendingDelete = null"
+      @confirm="removeTrip"
+    />
+    <ConfirmDialog
+      :open="commentPendingDelete !== null"
+      title="Kommentar löschen?"
+      message="Dieser Kommentar wird dauerhaft aus dem Trip entfernt."
+      confirm-label="Kommentar löschen"
+      :loading="commentPendingDelete ? deletingCommentId === commentPendingDelete.comment.id : false"
+      @cancel="commentPendingDelete = null"
+      @confirm="removeComment"
+    />
   </div>
 </template>

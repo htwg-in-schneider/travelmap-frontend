@@ -16,6 +16,7 @@ import {
 } from '@/services/api'
 import Button from '@/components/Button.vue'
 import OptionsMenu from '@/components/OptionsMenu.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const users = ref<AdminUser[]>([])
 const loading = ref(true)
@@ -26,6 +27,7 @@ const searchTerm = ref('')
 const editingId = ref<number | null>(null)
 const savingId = ref<number | null>(null)
 const deletingId = ref<number | null>(null)
+const userPendingDelete = ref<AdminUser | null>(null)
 const editForm = ref<Partial<AdminUser>>({})
 
 const USERNAME_PATTERN = /^[A-Za-z0-9_.-]+$/
@@ -165,12 +167,13 @@ async function saveEdit(user: AdminUser) {
   }
 }
 
-async function removeUser(user: AdminUser) {
-  const confirmed = window.confirm(
-    `Soll "${user.displayName}" (@${user.username}) wirklich gelöscht werden? Alle Reisen, Kommentare und Likes dieser Person werden ebenfalls entfernt.`,
-  )
-  if (!confirmed) return
+function requestRemoveUser(user: AdminUser) {
+  userPendingDelete.value = user
+}
 
+async function removeUser() {
+  const user = userPendingDelete.value
+  if (!user) return
   deletingId.value = user.id
   saveError.value = ''
   saveMessage.value = ''
@@ -181,6 +184,7 @@ async function removeUser(user: AdminUser) {
     if (editingId.value === user.id) {
       editingId.value = null
     }
+    userPendingDelete.value = null
     saveMessage.value = 'Benutzer:in gelöscht.'
     setTimeout(() => {
       saveMessage.value = ''
@@ -286,7 +290,7 @@ onMounted(async () => {
                         class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                         role="menuitem"
                         :disabled="deletingId === user.id"
-                        @click="close(); removeUser(user)"
+                        @click="close(); requestRemoveUser(user)"
                       >
                         <TrashIcon class="h-4 w-4" />
                         {{ deletingId === user.id ? 'Löschen…' : 'Löschen' }}
@@ -451,7 +455,7 @@ onMounted(async () => {
                 class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                 role="menuitem"
                 :disabled="deletingId === user.id"
-                @click="close(); removeUser(user)"
+                @click="close(); requestRemoveUser(user)"
               >
                 <TrashIcon class="h-4 w-4" />
                 {{ deletingId === user.id ? 'Löschen…' : 'Löschen' }}
@@ -590,5 +594,15 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+
+    <ConfirmDialog
+      :open="userPendingDelete !== null"
+      title="Benutzer:in löschen?"
+      :message="`Soll '${userPendingDelete?.displayName ?? ''}' (@${userPendingDelete?.username ?? ''}) wirklich gelöscht werden? Alle Reisen, Kommentare und Likes dieser Person werden ebenfalls entfernt.`"
+      confirm-label="Benutzer:in löschen"
+      :loading="userPendingDelete ? deletingId === userPendingDelete.id : false"
+      @cancel="userPendingDelete = null"
+      @confirm="removeUser"
+    />
   </div>
 </template>

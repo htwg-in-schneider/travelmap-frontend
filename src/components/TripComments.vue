@@ -5,6 +5,7 @@ import { type Comment } from '@/data'
 import { ApiError, fetchCommentsByTrip, createComment, deleteComment } from '@/services/api'
 import { auth0, AUTH_UNAVAILABLE_MESSAGE, loginWithRedirectSafe } from '@/auth0'
 import { PaperAirplaneIcon, UserIcon, TrashIcon } from '@heroicons/vue/24/solid'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const { isAuthenticated } = auth0
 
@@ -23,6 +24,7 @@ const postError = ref('')
 const deletingIds = ref<Set<number>>(new Set())
 const deleteError = ref('')
 const authError = ref('')
+const commentPendingDelete = ref<Comment | null>(null)
 
 function resolveTripId(): number {
   const raw = Array.isArray(props.tripId) ? props.tripId[0] : props.tripId
@@ -83,16 +85,20 @@ function onKeydown(event: KeyboardEvent) {
   }
 }
 
-async function removeComment(comment: Comment) {
+function requestRemoveComment(comment: Comment) {
   if (!comment.canDelete) return
-  const confirmed = window.confirm('Möchtest du diesen Kommentar wirklich löschen?')
-  if (!confirmed) return
+  commentPendingDelete.value = comment
+}
 
+async function removeComment() {
+  const comment = commentPendingDelete.value
+  if (!comment || !comment.canDelete) return
   deletingIds.value.add(comment.id)
   deleteError.value = ''
   try {
     await deleteComment(comment.id)
     comments.value = comments.value.filter((c) => c.id !== comment.id)
+    commentPendingDelete.value = null
   } catch (err) {
     console.error('Error deleting comment:', err)
     if (err instanceof ApiError && err.status === 403) {
@@ -171,17 +177,30 @@ watch(() => props.tripId, () => {
         :key="comment.id"
         class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
       >
-        <div class="mb-1 flex items-center justify-between">
-          <div class="flex items-center gap-1.5">
-            <UserIcon class="h-4 w-4 text-gray-500" />
-            <h5 class="font-semibold text-gray-900">{{ comment.authorName ?? 'Anonym' }}</h5>
+        <div class="mb-1 flex items-center justify-between gap-3">
+          <div class="flex min-w-0 items-center gap-2">
+            <img
+              v-if="comment.authorAvatarUrl"
+              :src="comment.authorAvatarUrl"
+              :alt="comment.authorName ?? comment.authorUsername ?? 'Profilbild'"
+              class="h-8 w-8 shrink-0 rounded-full object-cover"
+            />
+            <div
+              v-else
+              class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100"
+            >
+              <UserIcon class="h-5 w-5 text-gray-500" />
+            </div>
+            <h5 class="truncate font-semibold text-gray-900">
+              {{ comment.authorName ?? 'Anonym' }}
+            </h5>
           </div>
           <button
             v-if="comment.canDelete"
             :disabled="deletingIds.has(comment.id)"
             class="inline-flex items-center gap-1 rounded-lg p-1 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-50"
             :title="deletingIds.has(comment.id) ? 'Löschen…' : 'Kommentar löschen'"
-            @click="removeComment(comment)"
+            @click="requestRemoveComment(comment)"
           >
             <TrashIcon class="h-4 w-4" />
           </button>
@@ -192,5 +211,15 @@ watch(() => props.tripId, () => {
     <div v-else class="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
       Noch keine Kommentare vorhanden.
     </div>
+
+    <ConfirmDialog
+      :open="commentPendingDelete !== null"
+      title="Kommentar löschen?"
+      message="Dieser Kommentar wird dauerhaft entfernt."
+      confirm-label="Kommentar löschen"
+      :loading="commentPendingDelete ? deletingIds.has(commentPendingDelete.id) : false"
+      @cancel="commentPendingDelete = null"
+      @confirm="removeComment"
+    />
   </div>
 </template>

@@ -18,7 +18,7 @@ import type { UserSummary } from '@/data'
 import { searchUsers } from '@/services/api'
 import logo from '../../assets/travelmap-logo.svg'
 
-const { isAuthenticated, user } = auth0
+const { isAuthenticated } = auth0
 const { isAdmin, isSupport, isMarketing, username } = useUserRole()
 const showProfileMenu = ref(false)
 
@@ -326,13 +326,7 @@ async function goToProfile(userSummary: UserSummary) {
             title="Mein Profil"
             @click="showProfileMenu = !showProfileMenu"
           >
-            <img
-              v-if="user?.picture"
-              :src="user.picture"
-              :alt="user?.name ?? 'Profilbild'"
-              class="h-7 w-7 rounded-full object-cover min-[380px]:h-8 min-[380px]:w-8"
-            />
-            <UserCircleIcon v-else :class="iconClass" />
+            <UserCircleIcon :class="iconClass" />
           </button>
 
           <div v-if="showProfileMenu" class="fixed inset-0 z-40" @click="showProfileMenu = false" />
@@ -366,13 +360,7 @@ async function goToProfile(userSummary: UserSummary) {
           aria-label="Mein Profil"
           title="Mein Profil"
         >
-          <img
-            v-if="user?.picture"
-            :src="user.picture"
-            :alt="user?.name ?? 'Profilbild'"
-            class="h-7 w-7 rounded-full object-cover min-[380px]:h-8 min-[380px]:w-8"
-          />
-          <UserCircleIcon v-else :class="iconClass" />
+          <UserCircleIcon :class="iconClass" />
         </router-link>
       </div>
     </div>

@@ -251,6 +251,7 @@ async function login() {
                 :id="trip.id"
                 :title="trip.title"
                 :image-url="trip.imageUrls[0]"
+                :public-trip="trip.publicTrip"
               />
             </div>
           </div>

@@ -2,7 +2,14 @@
 import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { type Trip } from '@/data'
-import { ChevronLeftIcon, ChevronRightIcon, PencilIcon, TrashIcon, HeartIcon } from '@heroicons/vue/24/solid'
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  PencilIcon,
+  TrashIcon,
+  HeartIcon,
+  LockClosedIcon,
+} from '@heroicons/vue/24/solid'
 import { ApiError, fetchTripById, deleteTrip } from '@/services/api'
 import { useSocialStore } from '@/stores/social'
 import { auth0, AUTH_UNAVAILABLE_MESSAGE, loginWithRedirectSafe } from '@/auth0'
@@ -174,7 +181,16 @@ async function confirmDelete() {
           </router-link>
 
           <div class="flex items-start justify-between">
-            <h1 class="text-3xl text-gray-900">{{ trip.title }}</h1>
+            <div>
+              <h1 class="text-3xl text-gray-900">{{ trip.title }}</h1>
+              <span
+                v-if="trip.publicTrip === false"
+                class="mt-2 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700"
+              >
+                <LockClosedIcon class="h-3.5 w-3.5" />
+                Privat
+              </span>
+            </div>
             <div
               v-if="trip.countryCode"
               class="h-10 w-10 shrink-0 overflow-hidden rounded-lg shadow-sm"

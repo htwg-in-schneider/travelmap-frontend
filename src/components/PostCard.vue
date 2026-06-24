@@ -4,7 +4,13 @@ import { useRouter } from 'vue-router'
 import { type Trip } from '@/data'
 import { useSocialStore } from '@/stores/social'
 import { auth0, AUTH_UNAVAILABLE_MESSAGE, loginWithRedirectSafe } from '@/auth0'
-import { HeartIcon as HeartSolid, ChatBubbleLeftIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/solid'
+import {
+  HeartIcon as HeartSolid,
+  ChatBubbleLeftIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  LockClosedIcon,
+} from '@heroicons/vue/24/solid'
 import { HeartIcon as HeartOutline } from '@heroicons/vue/24/outline'
 import placeholder from '../../assets/placeholder.png'
 
@@ -98,6 +104,13 @@ function next() {
         </div>
       </router-link>
       <div v-else class="text-sm font-semibold text-gray-900">Anonym</div>
+      <span
+        v-if="trip.publicTrip === false"
+        class="ml-auto flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700"
+      >
+        <LockClosedIcon class="h-3.5 w-3.5" />
+        Privat
+      </span>
     </div>
 
     <div class="relative aspect-square w-full bg-gray-100" @click.stop>

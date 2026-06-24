@@ -8,6 +8,7 @@ export interface CreateTripPayload {
   countryCode: string | null
   latitude: number | null
   longitude: number | null
+  publicTrip: boolean
 }
 
 const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL

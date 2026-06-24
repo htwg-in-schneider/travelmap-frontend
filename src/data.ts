@@ -6,6 +6,7 @@ export interface Trip {
   countryCode: string | null
   latitude: number | null
   longitude: number | null
+  publicTrip: boolean
   commentCount: number
   ownerId: number | null
   ownerName: string | null

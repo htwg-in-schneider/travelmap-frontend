@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeftIcon } from '@heroicons/vue/24/solid'
+import { ArrowLeftIcon, EyeIcon, LockClosedIcon } from '@heroicons/vue/24/solid'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { type Trip } from '@/data'
@@ -23,6 +23,7 @@ const date = ref('')
 const countryCode = ref<string | null>(null)
 const lat = ref<number | null>(null)
 const lng = ref<number | null>(null)
+const publicTrip = ref(true)
 
 const saving = ref(false)
 const saveError = ref('')
@@ -128,6 +129,7 @@ onMounted(async () => {
     countryCode.value = data.countryCode
     lat.value = data.latitude
     lng.value = data.longitude
+    publicTrip.value = data.publicTrip
 
     await nextTick()
     initMap()
@@ -157,6 +159,7 @@ async function submit() {
       countryCode: countryCode.value,
       latitude: lat.value,
       longitude: lng.value,
+      publicTrip: publicTrip.value,
     }
     const validationError = validateTripPayload(payload)
     if (validationError) {
@@ -236,6 +239,40 @@ async function submit() {
                 class="resize-none rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 transition-colors outline-none placeholder:text-gray-400 focus:border-blue-600"
               />
             </div>
+
+            <fieldset class="flex flex-col gap-2">
+              <legend class="text-sm font-medium text-gray-700">Sichtbarkeit</legend>
+              <div class="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  :aria-pressed="publicTrip"
+                  :class="[
+                    'flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-medium transition',
+                    publicTrip
+                      ? 'border-blue-600 bg-blue-50 text-blue-700'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400',
+                  ]"
+                  @click="publicTrip = true"
+                >
+                  <EyeIcon class="h-5 w-5" />
+                  Öffentlich
+                </button>
+                <button
+                  type="button"
+                  :aria-pressed="!publicTrip"
+                  :class="[
+                    'flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-medium transition',
+                    !publicTrip
+                      ? 'border-blue-600 bg-blue-50 text-blue-700'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400',
+                  ]"
+                  @click="publicTrip = false"
+                >
+                  <LockClosedIcon class="h-5 w-5" />
+                  Privat
+                </button>
+              </div>
+            </fieldset>
           </div>
 
           <div class="flex flex-col gap-2">

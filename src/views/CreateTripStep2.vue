@@ -113,6 +113,7 @@ async function submit() {
       countryCode: store.countryCode || null,
       latitude: store.lat,
       longitude: store.lng,
+      publicTrip: store.publicTrip,
     }
     const validationError = validateTripPayload(payload)
     if (validationError) {

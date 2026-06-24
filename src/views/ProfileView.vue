@@ -511,7 +511,7 @@ onUnmounted(() => {
                   class="rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-600"
                 />
               </div>
-              <div class="flex flex-[2] flex-col gap-1.5">
+              <div class="flex flex-2 flex-col gap-1.5">
                 <label class="text-sm font-medium text-gray-700" for="profile-city">Ort</label>
                 <input
                   id="profile-city"

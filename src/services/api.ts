@@ -263,6 +263,10 @@ export async function updateAdminUser(
   return sendJson('PUT', `${ADMIN_USERS_URL}/${id}`, payload)
 }
 
+export async function deleteAdminUser(id: number): Promise<void> {
+  return sendJson('DELETE', `${ADMIN_USERS_URL}/${id}`)
+}
+
 // ---------------------------------------------------------------------------
 // Comments
 // ---------------------------------------------------------------------------

@@ -1,7 +1,19 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
-import { MagnifyingGlassIcon, PencilIcon, XMarkIcon, CheckIcon } from '@heroicons/vue/24/solid'
-import { fetchAdminUsers, updateAdminUser, type AdminUser, ApiError } from '@/services/api'
+import {
+  MagnifyingGlassIcon,
+  PencilIcon,
+  XMarkIcon,
+  CheckIcon,
+  TrashIcon,
+} from '@heroicons/vue/24/solid'
+import {
+  fetchAdminUsers,
+  updateAdminUser,
+  deleteAdminUser,
+  type AdminUser,
+  ApiError,
+} from '@/services/api'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
 import Button from '@/components/Button.vue'
@@ -15,6 +27,7 @@ const saveError = ref('')
 const searchTerm = ref('')
 const editingId = ref<number | null>(null)
 const savingId = ref<number | null>(null)
+const deletingId = ref<number | null>(null)
 
 const editForm = ref<Partial<AdminUser>>({})
 
@@ -135,6 +148,45 @@ async function saveEdit(user: AdminUser) {
   }
 }
 
+async function removeUser(user: AdminUser) {
+  const confirmed = window.confirm(
+    `Soll "${user.displayName}" (@${user.username}) wirklich gelöscht werden? Alle Reisen, Kommentare und Likes dieser Person werden ebenfalls entfernt.`,
+  )
+  if (!confirmed) return
+
+  deletingId.value = user.id
+  saveError.value = ''
+  saveMessage.value = ''
+
+  try {
+    await deleteAdminUser(user.id)
+    users.value = users.value.filter((u) => u.id !== user.id)
+    if (editingId.value === user.id) {
+      editingId.value = null
+    }
+    saveMessage.value = 'Benutzer:in gelöscht.'
+    setTimeout(() => {
+      saveMessage.value = ''
+    }, 3000)
+  } catch (err) {
+    console.error('Error deleting user:', err)
+    let message = 'Fehler beim Löschen.'
+    if (
+      err instanceof ApiError &&
+      typeof err.body === 'object' &&
+      err.body !== null &&
+      'error' in err.body
+    ) {
+      message = String((err.body as { error: string }).error)
+    } else if (err instanceof ApiError && err.status === 403) {
+      message = 'Keine Berechtigung.'
+    }
+    saveError.value = message
+  } finally {
+    deletingId.value = null
+  }
+}
+
 onMounted(async () => {
   try {
     users.value = await fetchAdminUsers()
@@ -218,13 +270,23 @@ onMounted(async () => {
                       </span>
                     </td>
                     <td class="px-4 py-3 text-right">
-                      <button
-                        class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-gray-600 transition hover:bg-gray-100"
-                        @click="startEdit(user)"
-                      >
-                        <PencilIcon class="h-4 w-4" />
-                        Bearbeiten
-                      </button>
+                      <div class="flex items-center justify-end gap-1">
+                        <button
+                          class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-gray-600 transition hover:bg-gray-100"
+                          @click="startEdit(user)"
+                        >
+                          <PencilIcon class="h-4 w-4" />
+                          Bearbeiten
+                        </button>
+                        <button
+                          class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                          :disabled="deletingId === user.id"
+                          @click="removeUser(user)"
+                        >
+                          <TrashIcon class="h-4 w-4" />
+                          {{ deletingId === user.id ? 'Löschen…' : 'Löschen' }}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   <tr v-if="editingId === user.id" class="border-t border-gray-100 bg-gray-50">
@@ -378,13 +440,23 @@ onMounted(async () => {
                 </span>
               </div>
               <div class="mb-3 text-sm text-gray-600">{{ formatAddress(user) }}</div>
-              <button
-                class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-gray-600 transition hover:bg-gray-100"
-                @click="startEdit(user)"
-              >
-                <PencilIcon class="h-4 w-4" />
-                Bearbeiten
-              </button>
+              <div class="flex items-center gap-2">
+                <button
+                  class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-gray-600 transition hover:bg-gray-100"
+                  @click="startEdit(user)"
+                >
+                  <PencilIcon class="h-4 w-4" />
+                  Bearbeiten
+                </button>
+                <button
+                  class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                  :disabled="deletingId === user.id"
+                  @click="removeUser(user)"
+                >
+                  <TrashIcon class="h-4 w-4" />
+                  {{ deletingId === user.id ? 'Löschen…' : 'Löschen' }}
+                </button>
+              </div>
 
               <div v-if="editingId === user.id" class="mt-4 border-t border-gray-100 pt-4">
                 <div v-if="saveError" class="mb-3 text-sm text-red-500">{{ saveError }}</div>

@@ -8,6 +8,7 @@ const router = useRouter()
 const store = useCreateTripStore()
 const fileInput = ref<HTMLInputElement | null>(null)
 const dragOver = ref(false)
+const uploadErrors = ref<string[]>([])
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -42,6 +43,7 @@ function validateFile(file: File): string | null {
 function handleFiles(files: FileList | null) {
   if (!files) return
 
+  uploadErrors.value = []
   const newFiles: File[] = []
   const errors: string[] = []
 
@@ -57,11 +59,11 @@ function handleFiles(files: FileList | null) {
   const total = store.images.length + newFiles.length
   if (total > MAX_IMAGES) {
     errors.push(`Maximal ${MAX_IMAGES} Bilder pro Reise.`)
-    newFiles.splice(MAX_IMAGES - store.images.length)
+    newFiles.splice(Math.max(0, MAX_IMAGES - store.images.length))
   }
 
   if (errors.length > 0) {
-    alert(errors.join('\n'))
+    uploadErrors.value = errors
   }
 
   if (newFiles.length > 0) {
@@ -150,6 +152,16 @@ function next() {
             class="hidden"
             @change="handleFileSelect"
           />
+        </div>
+
+        <div
+          v-if="uploadErrors.length"
+          class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          <p class="font-medium">Einige Bilder konnten nicht hinzugefügt werden.</p>
+          <ul class="mt-2 list-disc space-y-1 pl-5">
+            <li v-for="message in uploadErrors" :key="message">{{ message }}</li>
+          </ul>
         </div>
 
         <div v-if="store.images.length > 0" class="mt-6 grid grid-cols-3 gap-3">

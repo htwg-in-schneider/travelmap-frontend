@@ -52,6 +52,24 @@ let activeRequestId = 0
 
 const trimmedQuery = computed(() => query.value.trim())
 const isStaff = computed(() => isAdmin.value || isSupport.value || isMarketing.value)
+const currentRouteName = computed(() => route.name?.toString() ?? '')
+const iconClass = 'h-5 w-5 min-[380px]:h-6 min-[380px]:w-6'
+
+function navItemClass(active = false) {
+  return [
+    'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none min-[380px]:h-9 min-[380px]:w-9',
+    active ? 'bg-blue-600 text-white hover:bg-blue-700' : 'text-gray-700 hover:bg-gray-200',
+  ]
+}
+
+function isRouteActive(routeName: string) {
+  return currentRouteName.value === routeName
+}
+
+function isProfileRouteActive() {
+  if (currentRouteName.value === 'profile') return true
+  return currentRouteName.value === 'profile-username' && route.params.username === username.value
+}
 
 watch(trimmedQuery, (nextQuery) => {
   if (!searchExpanded.value) return
@@ -175,40 +193,41 @@ async function goToProfile(userSummary: UserSummary) {
 
 <template>
   <nav
-    class="fixed top-0 right-0 left-0 z-50 bg-gray-50/90 px-4 py-4 backdrop-blur-sm sm:px-6"
+    class="fixed top-0 right-0 left-0 z-50 bg-gray-50/90 px-2 py-3 backdrop-blur-sm min-[380px]:px-4 sm:px-6 sm:py-4"
   >
-    <div class="mx-auto flex w-full max-w-6xl items-center gap-3">
-      <router-link :to="homeRoute()" class="flex shrink-0 items-center gap-2">
-        <img :src="logo" alt="Travelmap Logo" class="h-8 w-auto" />
-        <span class="text-xl text-gray-900">Travelmap</span>
+    <div class="mx-auto flex w-full max-w-6xl items-center gap-2 min-[380px]:gap-3">
+      <router-link :to="homeRoute()" class="flex min-w-0 shrink items-center gap-2">
+        <img :src="logo" alt="Travelmap Logo" class="h-7 w-auto shrink-0 sm:h-8" />
+        <span class="hidden truncate text-lg text-gray-900 min-[380px]:inline sm:text-xl">Travelmap</span>
       </router-link>
 
-      <div v-if="isAuthenticated" class="ml-auto flex shrink-0 items-center gap-4">
+      <div v-if="isAuthenticated" class="ml-auto flex min-w-0 shrink-0 items-center gap-1 min-[380px]:gap-2 sm:gap-4">
         <template v-if="!isStaff">
           <router-link
             :to="{ name: 'home' }"
-            class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+            :class="navItemClass(isRouteActive('home'))"
             aria-label="Meine Reisen"
             title="Meine Reisen"
           >
-            <HomeIcon class="h-6 w-6" />
+            <HomeIcon :class="iconClass" />
           </router-link>
           <router-link
             :to="{ name: 'feed' }"
-            class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+            :class="navItemClass(isRouteActive('feed'))"
             aria-label="Feed"
             title="Feed"
           >
-            <NewspaperIcon class="h-6 w-6" />
+            <NewspaperIcon :class="iconClass" />
           </router-link>
           <div ref="searchRoot" class="relative">
             <button
-              class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+              :class="navItemClass(searchExpanded)"
               aria-label="User suchen"
               title="User suchen"
+              :aria-pressed="searchExpanded"
               @click="toggleSearch"
             >
-              <MagnifyingGlassIcon class="h-6 w-6" />
+              <MagnifyingGlassIcon :class="iconClass" />
             </button>
 
             <div
@@ -275,34 +294,34 @@ async function goToProfile(userSummary: UserSummary) {
         <router-link
           v-if="isAdmin"
           :to="{ name: 'admin-dashboard' }"
-          class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+          :class="navItemClass(isRouteActive('admin-dashboard'))"
           aria-label="Admin-Zentrale"
           title="Admin-Zentrale"
         >
-          <UsersIcon class="h-6 w-6" />
+          <UsersIcon :class="iconClass" />
         </router-link>
         <router-link
           v-if="isSupport"
           :to="{ name: 'support' }"
-          class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+          :class="navItemClass(isRouteActive('support'))"
           aria-label="Support – Moderation"
           title="Moderation"
         >
-          <ShieldCheckIcon class="h-6 w-6" />
+          <ShieldCheckIcon :class="iconClass" />
         </router-link>
         <router-link
           v-if="isMarketing"
           :to="{ name: 'marketing' }"
-          class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+          :class="navItemClass(isRouteActive('marketing'))"
           aria-label="Marketing – Statistiken"
           title="Statistiken"
         >
-          <ChartBarIcon class="h-6 w-6" />
+          <ChartBarIcon :class="iconClass" />
         </router-link>
 
         <div v-if="isStaff" class="relative">
           <button
-            class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+            :class="navItemClass(isProfileRouteActive())"
             aria-label="Mein Profil"
             title="Mein Profil"
             @click="showProfileMenu = !showProfileMenu"
@@ -311,9 +330,9 @@ async function goToProfile(userSummary: UserSummary) {
               v-if="user?.picture"
               :src="user.picture"
               :alt="user?.name ?? 'Profilbild'"
-              class="h-8 w-8 rounded-full"
+              class="h-7 w-7 rounded-full object-cover min-[380px]:h-8 min-[380px]:w-8"
             />
-            <UserCircleIcon v-else class="h-7 w-7 text-gray-800" />
+            <UserCircleIcon v-else :class="iconClass" />
           </button>
 
           <div v-if="showProfileMenu" class="fixed inset-0 z-40" @click="showProfileMenu = false" />
@@ -343,7 +362,7 @@ async function goToProfile(userSummary: UserSummary) {
         <router-link
           v-else
           :to="username ? { name: 'profile-username', params: { username } } : { name: 'profile' }"
-          class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
+          :class="navItemClass(isProfileRouteActive())"
           aria-label="Mein Profil"
           title="Mein Profil"
         >
@@ -351,9 +370,9 @@ async function goToProfile(userSummary: UserSummary) {
             v-if="user?.picture"
             :src="user.picture"
             :alt="user?.name ?? 'Profilbild'"
-            class="h-8 w-8 rounded-full"
+            class="h-7 w-7 rounded-full object-cover min-[380px]:h-8 min-[380px]:w-8"
           />
-          <UserCircleIcon v-else class="h-7 w-7 text-gray-800" />
+          <UserCircleIcon v-else :class="iconClass" />
         </router-link>
       </div>
     </div>

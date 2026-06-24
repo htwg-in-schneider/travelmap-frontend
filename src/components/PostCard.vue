@@ -25,6 +25,7 @@ const currentImage = computed(() => images.value[currentIndex.value] ?? placehol
 
 const likeState = computed(() => social.readLike(props.trip))
 const likeBusy = ref(false)
+const authError = ref('')
 
 function go() {
   router.push({ name: 'trip-detail', params: { id: props.trip.id } })
@@ -36,10 +37,11 @@ function goProfile() {
 
 async function login() {
   try {
+    authError.value = ''
     await loginWithRedirectSafe()
   } catch (err) {
     console.error('[PostCard] loginWithRedirect failed:', err)
-    window.alert(err instanceof Error ? err.message : AUTH_UNAVAILABLE_MESSAGE)
+    authError.value = err instanceof Error ? err.message : AUTH_UNAVAILABLE_MESSAGE
   }
 }
 
@@ -48,6 +50,7 @@ async function toggleLike() {
     await login()
     return
   }
+  authError.value = ''
   if (likeBusy.value) return
   likeBusy.value = true
   try {
@@ -64,6 +67,7 @@ function openComments() {
     login()
     return
   }
+  authError.value = ''
   go()
 }
 
@@ -172,6 +176,13 @@ function next() {
         <span class="text-sm font-medium">{{ trip.commentCount }}</span>
       </button>
       <span v-if="trip.countryCode" class="ml-auto text-base" :class="'fi-' + trip.countryCode.toLowerCase()" />
+    </div>
+
+    <div
+      v-if="authError"
+      class="mx-4 mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+    >
+      {{ authError }}
     </div>
 
     <div class="px-4 pb-4">

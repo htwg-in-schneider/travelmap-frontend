@@ -2,9 +2,9 @@
 import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { type Comment } from '@/data'
-import { fetchCommentsByTrip, createComment } from '@/services/api'
+import { fetchCommentsByTrip, createComment, deleteComment } from '@/services/api'
 import { auth0 } from '@/auth0'
-import { PaperAirplaneIcon, UserIcon } from '@heroicons/vue/24/solid'
+import { PaperAirplaneIcon, UserIcon, TrashIcon } from '@heroicons/vue/24/solid'
 
 const { isAuthenticated } = auth0
 
@@ -20,6 +20,8 @@ const error = ref('')
 const newCommentText = ref('')
 const posting = ref(false)
 const postError = ref('')
+const deletingIds = ref<Set<number>>(new Set())
+const deleteError = ref('')
 
 function resolveTripId(): number {
   const raw = Array.isArray(props.tripId) ? props.tripId[0] : props.tripId
@@ -74,6 +76,24 @@ function onKeydown(event: KeyboardEvent) {
   }
 }
 
+async function removeComment(comment: Comment) {
+  if (!comment.canDelete) return
+  const confirmed = window.confirm('Möchtest du diesen Kommentar wirklich löschen?')
+  if (!confirmed) return
+
+  deletingIds.value.add(comment.id)
+  deleteError.value = ''
+  try {
+    await deleteComment(comment.id)
+    comments.value = comments.value.filter((c) => c.id !== comment.id)
+  } catch (err) {
+    console.error('Error deleting comment:', err)
+    deleteError.value = 'Fehler beim Löschen des Kommentars.'
+  } finally {
+    deletingIds.value.delete(comment.id)
+  }
+}
+
 async function login() {
   try {
     await auth0.loginWithRedirect()
@@ -123,6 +143,7 @@ watch(() => props.tripId, () => {
     </div>
 
     <div v-if="postError" class="mb-3 text-sm text-red-500">{{ postError }}</div>
+    <div v-if="deleteError" class="mb-3 text-sm text-red-500">{{ deleteError }}</div>
 
     <div v-if="loading" class="text-gray-500">Laden...</div>
     <div v-else-if="error" class="text-red-500">{{ error }}</div>
@@ -137,6 +158,15 @@ watch(() => props.tripId, () => {
             <UserIcon class="h-4 w-4 text-gray-500" />
             <h5 class="font-semibold text-gray-900">{{ comment.authorName ?? 'Anonym' }}</h5>
           </div>
+          <button
+            v-if="comment.canDelete"
+            :disabled="deletingIds.has(comment.id)"
+            class="inline-flex items-center gap-1 rounded-lg p-1 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+            :title="deletingIds.has(comment.id) ? 'Löschen…' : 'Kommentar löschen'"
+            @click="removeComment(comment)"
+          >
+            <TrashIcon class="h-4 w-4" />
+          </button>
         </div>
         <p class="text-sm text-gray-600">{{ comment.text }}</p>
       </div>

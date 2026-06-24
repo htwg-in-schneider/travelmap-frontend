@@ -143,7 +143,7 @@ export async function saveTripImages(
 // Feed (Instagram-style)
 // ---------------------------------------------------------------------------
 
-/** Feed of trips posted by the users I follow (falls back to all trips). */
+/** Feed of trips posted by the users I follow. */
 export async function fetchFeed(): Promise<Trip[]> {
   return getJson<Trip[]>(FEED_URL)
 }

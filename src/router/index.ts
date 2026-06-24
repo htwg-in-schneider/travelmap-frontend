@@ -131,4 +131,19 @@ const router = createRouter({
   ],
 })
 
+router.beforeEach(async (to) => {
+  await waitForAuthReady()
+  if (!auth0.isAuthenticated.value) return true
+  if (to.name === 'admin-users') return true
+  try {
+    const me = await fetchMe()
+    if (me.admin && (to.name === 'home' || to.name === 'feed')) {
+      return { name: 'admin-users' }
+    }
+  } catch {
+    // ignore: let the route resolve normally if /api/me is unreachable
+  }
+  return true
+})
+
 export default router

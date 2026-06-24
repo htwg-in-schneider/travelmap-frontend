@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeftIcon, PlusIcon, FunnelIcon, MagnifyingGlassIcon, PencilIcon } from '@heroicons/vue/24/solid'
+import {
+  ArrowLeftIcon,
+  PlusIcon,
+  FunnelIcon,
+  MagnifyingGlassIcon,
+  PencilIcon,
+} from '@heroicons/vue/24/solid'
 import {
   fetchMe,
   updateMe,
@@ -58,8 +64,6 @@ const searchDebounceMs = 250
 let searchTimeout: ReturnType<typeof setTimeout> | null = null
 
 const usernameParam = computed(() => (route.params.username as string | undefined) ?? null)
-const isMe = computed(() => profile.value?.isMe ?? !usernameParam.value)
-const targetUsername = computed(() => profile.value?.username ?? me.value?.username ?? null)
 const avatarUrl = computed(() => profile.value?.avatarUrl ?? me.value?.avatarUrl ?? null)
 
 const visibleTrips = computed(() => {
@@ -315,7 +319,7 @@ onUnmounted(() => {
               v-if="avatarUrl"
               :src="avatarUrl"
               :alt="profile.username"
-              class="h-24 w-24 rounded-full object-cover ring-2 ring-white shadow"
+              class="h-24 w-24 rounded-full object-cover shadow ring-2 ring-white"
             />
             <div
               v-else
@@ -331,9 +335,15 @@ onUnmounted(() => {
               <div class="text-sm text-gray-500">@{{ profile.username }}</div>
               <p v-if="profile.bio" class="mt-2 text-gray-700">{{ profile.bio }}</p>
               <div class="mt-3 flex justify-center gap-6 text-sm text-gray-600 sm:justify-start">
-                <span><strong class="text-gray-900">{{ profile.tripCount }}</strong> Reisen</span>
-                <span><strong class="text-gray-900">{{ profile.followerCount }}</strong> Follower</span>
-                <span><strong class="text-gray-900">{{ profile.followingCount }}</strong> folgt</span>
+                <span
+                  ><strong class="text-gray-900">{{ profile.tripCount }}</strong> Reisen</span
+                >
+                <span
+                  ><strong class="text-gray-900">{{ profile.followerCount }}</strong> Follower</span
+                >
+                <span
+                  ><strong class="text-gray-900">{{ profile.followingCount }}</strong> folgt</span
+                >
               </div>
             </div>
 
@@ -376,7 +386,7 @@ onUnmounted(() => {
                 v-if="avatarUrl"
                 :src="avatarUrl"
                 :alt="me?.username ?? 'Ich'"
-                class="h-20 w-20 rounded-full object-cover ring-2 ring-white shadow"
+                class="h-20 w-20 rounded-full object-cover shadow ring-2 ring-white"
               />
               <div
                 v-else
@@ -423,7 +433,9 @@ onUnmounted(() => {
 
             <div class="flex gap-4">
               <div class="flex flex-1 flex-col gap-1.5">
-                <label class="text-sm font-medium text-gray-700" for="profile-postal-code">PLZ</label>
+                <label class="text-sm font-medium text-gray-700" for="profile-postal-code"
+                  >PLZ</label
+                >
                 <input
                   id="profile-postal-code"
                   v-model="postalCode"

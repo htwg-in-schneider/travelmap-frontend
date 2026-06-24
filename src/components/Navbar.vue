@@ -28,12 +28,16 @@ function signOut() {
   <nav
     class="fixed top-0 right-0 left-0 z-50 flex items-center justify-between bg-gray-50/90 px-6 py-4 backdrop-blur-sm"
   >
-    <router-link :to="{ name: 'home' }" class="flex items-center gap-2">
+    <router-link
+      :to="isAdmin ? { name: 'admin-users' } : { name: 'home' }"
+      class="flex items-center gap-2"
+    >
       <img :src="logo" alt="Travelmap Logo" class="h-8 w-auto" />
       <span class="text-xl text-gray-900">Travelmap</span>
     </router-link>
     <div class="flex items-center gap-4">
       <router-link
+        v-if="!isAdmin"
         :to="{ name: 'home' }"
         class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
         aria-label="Meine Reisen"
@@ -42,6 +46,7 @@ function signOut() {
         <HomeIcon class="h-6 w-6" />
       </router-link>
       <router-link
+        v-if="!isAdmin"
         :to="{ name: 'feed' }"
         class="flex h-9 w-9 items-center justify-center rounded-xl text-gray-700 transition hover:bg-gray-200"
         aria-label="Feed"
@@ -87,7 +92,7 @@ function signOut() {
             </span>
           </div>
           <router-link
-            v-if="username"
+            v-if="username && !isAdmin"
             :to="{ name: 'profile-username', params: { username } }"
             class="block w-full rounded-lg px-2 py-1.5 text-left text-sm text-gray-700 transition hover:bg-gray-100"
             @click="menuOpen = false"

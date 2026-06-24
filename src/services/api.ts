@@ -46,13 +46,36 @@ async function getJson<T>(url: string): Promise<T> {
   return response.json()
 }
 
+export class ApiError extends Error {
+  status: number
+  body: unknown
+
+  constructor(status: number, body: unknown, message: string) {
+    super(message)
+    this.status = status
+    this.body = body
+  }
+}
+
 async function sendJson<T>(method: string, url: string, body?: unknown): Promise<T> {
   const response = await fetch(url, {
     method,
     headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
     body: body === undefined ? undefined : JSON.stringify(body),
   })
-  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+  if (!response.ok) {
+    let errorBody: unknown = null
+    try {
+      errorBody = await response.json()
+    } catch {
+      errorBody = await response.text().catch(() => null)
+    }
+    const message =
+      typeof errorBody === 'object' && errorBody !== null && 'error' in errorBody
+        ? String((errorBody as { error: string }).error)
+        : `HTTP error! status: ${response.status}`
+    throw new ApiError(response.status, errorBody, message)
+  }
   if (response.status === 204) return undefined as unknown as T
   return response.json()
 }
@@ -85,7 +108,10 @@ export async function updateTrip(id: number, payload: CreateTripPayload): Promis
 }
 
 export async function deleteTrip(id: number): Promise<void> {
-  const response = await fetch(`${BASE_URL}/${id}`, { method: 'DELETE', headers: await authHeaders() })
+  const response = await fetch(`${BASE_URL}/${id}`, {
+    method: 'DELETE',
+    headers: await authHeaders(),
+  })
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
 }
 
@@ -213,6 +239,7 @@ export interface AdminUser {
   username: string
   displayName: string
   email: string
+  bio: string | null
   street: string | null
   postalCode: string | null
   city: string | null
@@ -226,7 +253,12 @@ export async function fetchAdminUsers(): Promise<AdminUser[]> {
 
 export async function updateAdminUser(
   id: number,
-  payload: Partial<Pick<AdminUser, 'displayName' | 'street' | 'postalCode' | 'city' | 'country'>>,
+  payload: Partial<
+    Pick<
+      AdminUser,
+      'username' | 'displayName' | 'email' | 'bio' | 'street' | 'postalCode' | 'city' | 'country'
+    >
+  >,
 ): Promise<AdminUser> {
   return sendJson('PUT', `${ADMIN_USERS_URL}/${id}`, payload)
 }
@@ -250,6 +282,9 @@ export async function createComment(payload: CreateCommentPayload): Promise<Comm
 }
 
 export async function deleteComment(id: number): Promise<void> {
-  const response = await fetch(`${COMMENT_URL}/${id}`, { method: 'DELETE', headers: await authHeaders() })
+  const response = await fetch(`${COMMENT_URL}/${id}`, {
+    method: 'DELETE',
+    headers: await authHeaders(),
+  })
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
 }
